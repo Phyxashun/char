@@ -31,7 +31,7 @@
     "./src/**/*.ts",
     "./src/**/*.d.ts",
     "./src/global.d.ts"
-  ],
+, "index.ts"  ],
   "exclude": [
     "./ALL/**/*.*"
   ]

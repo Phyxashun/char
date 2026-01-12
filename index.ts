@@ -1,6 +1,6 @@
 // ./src/index.ts
 
-import { Char } from './Char.ts';
+import { Char } from './src/Char.ts';
 import { styleText, inspect, type InspectOptions } from 'node:util';
 
 const inspectOptions: InspectOptions = {
