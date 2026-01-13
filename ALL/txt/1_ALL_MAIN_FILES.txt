@@ -7,7 +7,7 @@
 
 // ./src/Char.ts
 
-import { inspect, type BunInspectOptions } from 'bun';
+import { inspect, type InspectOptions } from 'node:util';
 import { CharType } from './CharType.ts';
 import { CharSpec } from './CharSpec.ts';
 
@@ -74,7 +74,7 @@ export class IChar {
     constructor(type?: CharType, value?: string, isSubstring?: boolean, position?: Position) {
         this.type = type ?? CharType.Undefined;
         this.#value = new Uint16Array();
-        this.value = value ?? '';
+        this.value = value ?? ' ';
         this.#isSubstring = isSubstring ?? false;
         this.position = position ? position : new Position();
     }
@@ -162,30 +162,30 @@ export class Char extends IChar {
      * @param options The inspection options, which *now* correctly contains `stylize`.
      * @param inspect The util.inspect function itself (useful for recursive calls).
      */
-    [inspect.custom] = (depth: number, options: BunInspectOptions, inspectFn: Function): string => {
+    [inspect.custom] = (depth: number, options: InspectOptions, inspectFn: Function): string => {
         const stylize = (options as any).stylize;
 
         // If recursion depth is exhausted, show a placeholder.
         if (depth < 0) return stylize(`[Char]`, 'special');
 
         // Get the class name and stylize it. Using `this.constructor.name` is robust.
-        const CLASSNAME = stylize(this.constructor.name, 'special'); 
+        const CLASSNAME = stylize(this.constructor.name, 'special');
 
         // Get the character value representation from `toString()` method.
-        const charString   = `'${this.toString()}'`;
+        const charString = `'${this.toString()}'`;
         const charPadStart = charString.padStart(4, ' ')
-        const charPadEnd   = charPadStart.padEnd(4, ' ');
-        const CHAR         = stylize(`${charPadEnd}`, 'date');
+        const charPadEnd = charPadStart.padEnd(6, ' ');
+        const CHAR = stylize(`${charPadEnd}`, 'date');
 
         // Handle the position info if it exists.
         let IDX = '', POS = '';
         if (this.isSubstring) {
             // Stylize the index, line and column numbers.
-            const idxPadStart    = `${this.position.index}` .padStart(2, ' ');
-            const linPadStart    = `${this.position.line}`  .padStart(2, ' ');
-            const colPadStart    = `${this.position.column}`.padStart(2, ' ');
-            const linColInfo     = `[ ${linPadStart} : ${colPadStart} ]`
-            const posInfo        = stylize(linColInfo, 'number');
+            const idxPadStart = `${this.position.index}`.padStart(2, ' ');
+            const linPadStart = `${this.position.line}`.padStart(2, ' ');
+            const colPadStart = `${this.position.column}`.padStart(2, ' ');
+            const linColInfo = `[ ${linPadStart} : ${colPadStart} ]`
+            const posInfo = stylize(linColInfo, 'number');
 
             IDX = stylize(`[${idxPadStart}]`, 'number');
             POS = `, pos: ${posInfo}`;
@@ -193,9 +193,9 @@ export class Char extends IChar {
 
         // Get the type and stylize it.
         const typePadEnd = this.type.padEnd(11, ' ');
-        const typeInfo   = stylize(typePadEnd, 'string');
-        const charType   = stylize(`CharType.`, 'special');
-        const TYPE       = `type: ${charType}${typeInfo}${POS}`;
+        const typeInfo = stylize(typePadEnd, 'string');
+        const charType = stylize(`CharType.`, 'special');
+        const TYPE = `type: ${charType}${typeInfo}${POS}`;
 
         // Combine everything into the final string.
         return `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
@@ -237,15 +237,27 @@ export class Char extends IChar {
     }
 
     public isPunctuation(): boolean {
-        return this.type === CharType.Punctuation;
+        const puncTypes = [
+            CharType.Punctuation, CharType.Exclamation, CharType.Comma,
+            CharType.Colon, CharType.SemiColon, CharType.Question, CharType.Dot
+        ];
+        return puncTypes.includes(this.type);
     }
 
     public isSymbol(): boolean {
-        return this.type === CharType.Symbol;
+        const symbolTypes = [
+            CharType.Symbol, CharType.Currency, CharType.Hash,
+            CharType.Percent, CharType.Plus, CharType.EqualSign
+        ];
+        return symbolTypes.includes(this.type);
     }
 
     public isUnicode(): boolean {
         return this.type === CharType.Unicode;
+    }
+
+    public isUndefined(): boolean {
+        return this.type === CharType.Undefined;
     }
 
     public isUpperCase(): boolean {

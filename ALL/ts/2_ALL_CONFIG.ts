@@ -64,10 +64,11 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
     "@types/bun": "^1.3.5",
     "@types/node": "^25.0.6",
     "@vitest/coverage-v8": "^4.0.17",
-    "typedoc": "^0.28.16",
-    "vitest": "^4.0.17",
+    "bun": "^1.3.5",
     "consolidate": "link:consolidate",
-    "logger": "link:logger"
+    "logger": "link:logger",
+    "typedoc": "^0.28.16",
+    "vitest": "^4.0.17"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -76,7 +77,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
     "char": "./index.ts"
   },
   "scripts": {
-    "start": "bun run ./src/index.ts",
+    "start": "bun run ./index.ts",
     "test": "vitest",
     "coverage": "vitest --coverage"
   }

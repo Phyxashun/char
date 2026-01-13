@@ -1,0 +1,259 @@
+{
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    "git.enableSmartCommit": true,
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.openRepositoryInParentFolders": "always",
+    "files.trimTrailingWhitespaceInRegexAndStrings": false,
+    "workbench.colorTheme": "Monokai Pro (Filter Spectrum)",
+    "workbench.iconTheme": "vs-seti",
+    "terminal.integrated.fontFamily": "'Hack Nerd Font'",
+    "terminal.integrated.lineHeight": 1.10,
+    "editor.fontSize": 15,
+    "editor.fontFamily": "'Hack Nerd Font', monospace",
+    "editor.smoothScrolling": true,
+    "editor.fontLigatures": true,
+    "editor.lineHeight": 1.5,
+    "editor.minimap.enabled": false,
+    "editor.tabSize": 2,
+    "editor.semanticTokenColorCustomizations": {
+        "enabled": true
+    },
+    "editor.semanticHighlighting.enabled": true,
+    "typescript.suggest.paths": false,
+    "typescript.format.enable": true,
+    "typescript.format.semicolons": "insert",
+    "typescript.preferences.quoteStyle": "single",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "[typescript]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.wordWrap": "on"
+    },
+    "javascript.format.enable": true,
+    "javascript.format.semicolons": "insert",
+    "javascript.preferences.quoteStyle": "single",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "javascript.suggest.paths": false,
+    "[javascript]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.wordWrap": "on"
+    },
+    "npm-intellisense.importES6": true,
+    "npm-intellisense.importQuotes": "'",
+    "npm-intellisense.importLinebreak": ";\r\n",
+    "npm-intellisense.importDeclarationType": "const",
+    "eslint.enable": true,
+    "eslint.codeAction.showDocumentation": {
+        "enable": true
+    },
+    "eslint.codeAction.disableRuleComment": {
+        "enable": true,
+        "location": "sameLine"
+    },
+    "editor.stickyScroll.enabled": true,
+    "editor.cursorBlinking": "expand",
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.guides.highlightActiveBracketPair": true,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "editor.guides.bracketPairs": "active",
+    "editor.guides.indentation": true,
+    "editor.indentSize": 2,
+    "editor.tabCompletion": "on",
+    "editor.showDeprecated": true,
+    "editor.autoIndent": "full",
+    "editor.rulers": [
+        140
+    ],
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 145,
+    "[markdown]": {
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    },
+    "markdownlint.config": {
+        "default": true,
+        "MD001": false,
+        "MD010": false,
+        "MD022": false,
+        "MD024": false,
+        "MD025": false
+    },
+    "emojisense.languages": {
+        "markdown": true,
+        "plaintext": false,
+        "json": true,
+        "scminput": true // language used in the source control commit message box
+    },
+    "todo-tree.tree.showCountsInTree": true,
+    "todo-tree.general.statusBar": "top three",
+    "todo-tree.general.showIconsInsteadOfTagsInStatusBar": true,
+    "todo-tree.general.tags": [
+        "TODO",
+        "FIXME",
+        "FIXIT",
+        "FIX",
+        "BUG"
+    ],
+    "todo-tree.general.tagGroups": {
+        "FIXME": [
+            "FIXME",
+            "FIXIT",
+            "FIX",
+            "BUG"
+        ]
+    },
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {
+            "gutterIcon": true,
+            "icon": "tasklist",
+            "iconColour": "#FF8C00",
+            "type": "tag",
+            "background": "#CF7200",
+            "foreground": "#FFFFFF",
+            "fontWeight": "bold"
+        },
+        "FIXME": {
+            "gutterIcon": true,
+            "icon": "tools",
+            "iconColour": "#00FF00",
+            "type": "tag",
+            "background": "#008000",
+            "foreground": "#FFFF00",
+            "fontWeight": "bold"
+        }
+    },
+    "better-comments.multilineComments": true,
+    "better-comments.tags": [
+        {
+            "tag": "!",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "?",
+            "color": "#3498DB",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "//",
+            "color": "#474747",
+            "strikethrough": true,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "todo",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "fixme",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "fixit",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "fix",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "bug",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "*",
+            "color": "#98C379",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        }
+    ],
+    "terminal-in-status-bar.statusBarAlignment": "right",
+    "terminal-in-status-bar.statusBarPriority": 10000,
+    "indentRainbow.indicatorStyle": "classic",
+    "indentRainbow.lightIndicatorStyleLineWidth": 1,
+    "indentRainbow.colorOnWhiteSpaceOnly": true,
+    "indentRainbow.updateDelay": 100,
+    "indentRainbow.ignoreErrorLanguages": [
+        "haskell"
+    ],
+    "indentRainbow.errorColor": "rgba(128,32,32,0.6)",
+    "indentRainbow.tabmixColor": "rgba(128,32,96,0.6)",
+    "indentRainbow.colors": [
+        "rgba(255,255,64,0.07)",
+        "rgba(127,255,127,0.07)",
+        "rgba(255,127,255,0.07)",
+        "rgba(79,236,236,0.07)"
+    ],
+    "bookmarks.saveBookmarksInProject": false,
+    "bookmarks.showCommandsInContextMenu": true,
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "firefox.keepProfileChanges": false,
+    "firefox.port": 6000,
+    "formattingToggle.affects": [
+        "editor.formatOnPaste",
+        "editor.formatOnSave",
+        "editor.formatOnType",
+        "editor.codeActionsOnSave.source.fixAll.eslint"
+    ],
+    "formattingToggle.statusBarText": {
+        "formattingEnabled": "$(heart-filled) Formatting On",
+        "formattingDisabled": "$(heart) Formatting Off"
+    },
+    // The path to the `bun` executable.
+    "bun.runtime": "../../../../.local/share/nvm/v25.2.1/bin/bun",
+    // If support for Bun should be added to the default "JavaScript Debug Terminal".
+    "bun.debugTerminal.enabled": true,
+    // If the debugger should stop on the first line of the program.
+    "bun.debugTerminal.stopOnEntry": false,
+    // Glob pattern to find test files. Defaults to the value shown below.
+    "bun.test.filePattern": "**/*{.test.,.spec.,_test_,_spec_}{js,ts,tsx,jsx,mts,cts,cjs,mjs}",
+    // The custom script to call for testing instead of `bun test`
+    "bun.test.customScript": "bun test",
+}
