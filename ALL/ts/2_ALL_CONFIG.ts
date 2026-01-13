@@ -105,11 +105,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
     // Environment setup & latest features
     "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "Preserve",
+    "module": "ESNext",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-
+    "forceConsistentCasingInFileNames": true,
+    
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
