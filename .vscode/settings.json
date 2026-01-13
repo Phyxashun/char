@@ -228,6 +228,7 @@
     ],
     "bookmarks.saveBookmarksInProject": false,
     "bookmarks.showCommandsInContextMenu": true,
+    "json.schemaDownload.enable": true,
     "[json]": {
         "editor.defaultFormatter": "vscode.json-language-features"
     },
@@ -247,7 +248,7 @@
         "formattingDisabled": "$(heart) Formatting Off"
     },
     // The path to the `bun` executable.
-    "bun.runtime": "../../../../.local/share/nvm/v25.2.1/bin/bun",
+    "bun.runtime": "~/.local/share/nvm/v25.2.1/bin/bun",
     // If support for Bun should be added to the default "JavaScript Debug Terminal".
     "bun.debugTerminal.enabled": true,
     // If the debugger should stop on the first line of the program.
