@@ -730,6 +730,21 @@ interface TestContext {
 type TestNumber = 1 | 2 | 3 | 4 | 5;
 type TestFunction = (ctx: TestContext) => void;
 
+// node:util.inspect options
+const inspectOptions: InspectOptions = {
+    showHidden: false,
+    depth: null,
+    colors: true,
+    customInspect: true,
+    showProxy: false,
+    maxArrayLength: null,
+    maxStringLength: null,
+    breakLength: 180,
+    compact: true,
+    sorted: false,
+    getters: false,
+    numericSeparator: true,
+};
 
 // Utility Functions
 const util = {
@@ -750,22 +765,6 @@ const util = {
 
     // Returns a stylized Char
     inspect: (ch: Char): string => {
-        // node:util.inspect options
-        const inspectOptions: InspectOptions = {
-            showHidden: false,
-            depth: null,
-            colors: true,
-            customInspect: true,
-            showProxy: false,
-            maxArrayLength: null,
-            maxStringLength: null,
-            breakLength: 180,
-            compact: true,
-            sorted: false,
-            getters: false,
-            numericSeparator: true,
-        };
-
         return inspect(ch, inspectOptions);
     },
 };
@@ -791,7 +790,7 @@ const testMap: Record<TestNumber, TestFunction> = {
 
         util.insertReturn();
     },
-    
+
     /**
      * Creates a Char from a single character string and displays its ininspection on the console
      */
@@ -814,7 +813,7 @@ const testMap: Record<TestNumber, TestFunction> = {
 
         util.insertReturn();
     },
-    
+
     /**
      * Finds a character within a Char[], outputs result to console
      */
@@ -889,13 +888,13 @@ const testMap: Record<TestNumber, TestFunction> = {
 
         util.insertReturn();;
     },
-} 
+};
 
 // Execute tests
 const runTest = (str: string, tests: TestNumber[], ltr?: string): void => {
     const ctx = { str, ltr };
     tests.forEach(num => testMap[num](ctx));
-}
+};
 
 // Test strings
 const charA = 'A';
@@ -904,14 +903,34 @@ const myStringA = `Hello, World!\nThis is line 2.`;
 const myStringB = `🪖\t\⚔️ 🎖️\n🪖\t\🎖️ 💪`;
 
 // Execute tests with test strings
-console.clear();
-runTest(charA, [1]);
-runTest(charB, [1]);
-runTest('Ⅷ', [2]);
-runTest('⑩', [2]);
-runTest(myStringA, [3, 4, 5], 'W');
-runTest(myStringB, [3, 4, 5], '⚔️');
+//console.clear();
+//runTest(charA, [1]);
+//runTest(charB, [1]);
+//runTest('Ⅷ', [2]);
+//runTest('⑩', [2]);
+//runTest(myStringA, [3, 4, 5], 'W');
+runTest(myStringB, [5], '⚔️');
 
+const fullLog = JSON.stringify(Char.DEBUG_INFO, null, 2)
+    .replace(/\\u001b/g, '\x1b') // Converts escaped unicode back to real ESC
+    .replace(/\\n/g, '\n');      // Fixes any literal newlines
+
+console.log(fullLog);
+
+function deepLog(data: any) {
+    const output = inspect(data, {
+        depth: null,
+        colors: true,
+        breakLength: 100, // Keeps long ANSI strings on one line if possible
+    });
+
+    // This regex handles both the standard \u001b and the 
+    // way inspect sometimes formats them as \x1B
+    console.log(output.replace(/\\u001b|\\x1b/gi, '\x1b'));
+}
+
+// Now you can just do:
+deepLog(Char.DEBUG_INFO);
 
 
 

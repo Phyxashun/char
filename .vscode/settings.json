@@ -46,7 +46,7 @@
     "typescript.updateImportsOnFileMove.enabled": "always",
     "[typescript]": {
         "files.autoSave": "onFocusChange",
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.defaultFormatter": "vscode.typescript-language-features",
         "editor.wordWrap": "on"
     },
     "javascript.format.enable": true,
