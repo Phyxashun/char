@@ -8,19 +8,36 @@
     "files.trimTrailingWhitespaceInRegexAndStrings": false,
     "workbench.colorTheme": "Monokai Pro (Filter Spectrum)",
     "workbench.iconTheme": "vs-seti",
-    "terminal.integrated.fontFamily": "'Hack Nerd Font'",
-    "terminal.integrated.lineHeight": 1.10,
+    "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font', 'Hack Nerd Font Mono', 'Fira Code Nerd Font', monospace",
+    "terminal.integrated.lineHeight": 1,
     "editor.fontSize": 15,
-    "editor.fontFamily": "'Hack Nerd Font', monospace",
+    "editor.fontFamily": "'JetBrainsMono Nerd Font', 'Hack Nerd Font Mono', 'Fira Code Nerd Font', monospace",
     "editor.smoothScrolling": true,
     "editor.fontLigatures": true,
-    "editor.lineHeight": 1.5,
+    "editor.lineHeight": 1.4,
     "editor.minimap.enabled": false,
     "editor.tabSize": 2,
     "editor.semanticTokenColorCustomizations": {
         "enabled": true
     },
     "editor.semanticHighlighting.enabled": true,
+    "editor.stickyScroll.enabled": true,
+    "editor.cursorBlinking": "expand",
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.guides.highlightActiveBracketPair": true,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "editor.guides.bracketPairs": "active",
+    "editor.guides.indentation": true,
+    "editor.indentSize": 2,
+    "editor.tabCompletion": "on",
+    "editor.showDeprecated": true,
+    "editor.autoIndent": "full",
+    "editor.rulers": [
+        140
+    ],
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 145,
     "typescript.suggest.paths": false,
     "typescript.format.enable": true,
     "typescript.format.semicolons": "insert",
@@ -53,23 +70,6 @@
         "enable": true,
         "location": "sameLine"
     },
-    "editor.stickyScroll.enabled": true,
-    "editor.cursorBlinking": "expand",
-    "editor.cursorSmoothCaretAnimation": "on",
-    "editor.guides.highlightActiveBracketPair": true,
-    "editor.bracketPairColorization.enabled": true,
-    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
-    "editor.guides.bracketPairs": "active",
-    "editor.guides.indentation": true,
-    "editor.indentSize": 2,
-    "editor.tabCompletion": "on",
-    "editor.showDeprecated": true,
-    "editor.autoIndent": "full",
-    "editor.rulers": [
-        140
-    ],
-    "editor.wordWrap": "bounded",
-    "editor.wordWrapColumn": 145,
     "[markdown]": {
         "editor.defaultFormatter": "yzhang.markdown-all-in-one"
     },
@@ -256,5 +256,5 @@
     // Glob pattern to find test files. Defaults to the value shown below.
     "bun.test.filePattern": "**/*{.test.,.spec.,_test_,_spec_}{js,ts,tsx,jsx,mts,cts,cjs,mjs}",
     // The custom script to call for testing instead of `bun test`
-    "bun.test.customScript": "bun test",
+    "bun.test.customScript": "bun test"
 }
