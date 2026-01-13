@@ -48,3 +48,4 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
     [CharType.Symbol, (char: string) => /\p{S}/u.test(char)],
     [CharType.Unicode, (char: string) => /\P{ASCII}/u.test(char)],
 ]);
+

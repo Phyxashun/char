@@ -51,6 +51,34 @@ interface InspectOptions {
 }//*/
 
 /**
+ * Constants
+ */
+const TARGET_CHAR_DISPLAY_WIDTH = 8;
+const IS_UNDEFINED = -1;
+const IS_NULL = 0;
+const SINGLE_WIDTH = 1;
+const DOUBLE_WIDTH = 2;
+const COMMON_ESCAPES: Record<string, string> = {
+    '\n': '\\n',
+    '\r': '\\r',
+    '\r\n': '\\r\\n', // Standard CRLF segment
+    '\t': '\\t',
+    '\v': '\\v',
+    '\f': '\\f',
+    '\0': '\\0',
+    '\\': '\\\\'
+} as const;
+const NUMERAL_MAP: Record<string, number> = {
+    'Ⅰ': 1, 'Ⅱ': 2, 'Ⅲ': 3, 'Ⅳ': 4, 'Ⅴ': 5,
+    'Ⅵ': 6, 'Ⅶ': 7, 'Ⅷ': 8, 'Ⅸ': 9, 'Ⅹ': 10,
+    'Ⅺ': 11, 'Ⅻ': 12, 'Ⅼ': 50, 'Ⅽ': 100, 'Ⅾ': 500,
+    'Ⅿ': 1000,
+    // Add other numeral systems here
+    '①': 1, '②': 2, '③': 3, '④': 4, '⑤': 5,
+    '⑥': 6, '⑦': 7, '⑧': 8, '⑨': 9, '⑩': 10,
+} as const;
+
+/**
  * @class Position
  * @description - A class representing the position of a sub-object within another object
  * @property {number} index  - The zero-based index of the character within the source object.
@@ -59,50 +87,53 @@ interface InspectOptions {
  */
 export class Position {
     constructor(
-        public index: number = -1,
-        public line: number = -1,
-        public column: number = -1
+        public index: number = IS_UNDEFINED,
+        public line: number = IS_UNDEFINED,
+        public column: number = IS_UNDEFINED,
     ) { }
 }
 
 export class IChar {
     public type: CharType;
-    #value: Uint16Array;
-    #isSubstring: boolean;
+    // Use Uint32Array to safely store full 21-bit Unicode code points
+    protected _value: Uint32Array;
+    protected _isSubstring: boolean;
     public position: Position;
 
     constructor(type?: CharType, value?: string, isSubstring?: boolean, position?: Position) {
         this.type = type ?? CharType.Undefined;
-        this.#value = new Uint16Array();
+        this._value = new Uint32Array(0);
         this.value = value ?? ' ';
-        this.#isSubstring = isSubstring ?? false;
+        this._isSubstring = isSubstring ?? false;
         this.position = position ? position : new Position();
     }
 
     public get isSubstring(): boolean {
-        return this.#isSubstring && this.position && this.position.index !== -1
+        return this._isSubstring && this.position && this.position.index !== IS_UNDEFINED;
     }
 
     public set isSubstring(value: boolean) {
-        this.#isSubstring = value;
+        this._isSubstring = value;
     }
 
     public get value(): string {
-        return String.fromCharCode(...this.#value);
+        // Convert code points to strings one-by-one to avoid 
+        // stack overflow limits caused by the spread operator (...)
+        return Array.from(this._value)
+            .map(codePoint => String.fromCodePoint(codePoint))
+            .join('');
     }
 
     public set value(character: string) {
-        if (!character || [...character].length !== 1) {
-            throw new Error("Input must be a single Unicode character.");
+        // Use Array.from to correctly extract full code points (not UTF-16 units)
+        const codePoints = Array.from(character).map(c => c.codePointAt(0)!);
+
+        // Validate that nothing stored is outside the valid Unicode range
+        if (codePoints.some(cp => cp > 0x10FFFF)) {
+            throw new Error("Invalid Unicode code point detected.");
         }
 
-        const unicodeValue: number[] = [];
-        for (let i = 0; i < character.length; i++) {
-            unicodeValue.push(character.charCodeAt(i));
-        }
-
-        // Store these code units in a Uint16Array.
-        this.#value = new Uint16Array(unicodeValue);
+        this._value = new Uint32Array(codePoints);
     }
 }
 
@@ -117,6 +148,7 @@ export class IChar {
  */
 export class Char extends IChar {
     private readonly raw: string;
+    public static DEBUG_INFO: any[] = [];
 
     /**
      * Creates an instance of a Char.
@@ -130,26 +162,41 @@ export class Char extends IChar {
             position?: Position;
         } = {}
     ) {
-        if (!character || [...character].length !== 1) {
-            throw new Error("Input must be a single Unicode character.");
+        // Unicode-safe validation using Intl.Segmenter
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        const segments = Array.from(segmenter.segment(character));
+
+        if (segments.length !== 1) {
+            throw new Error("Input must be a single visual character (grapheme).");
         }
+
         const isSubstring = options.isSubstring ?? false;
         const position = options.position;
 
-        super(Char.getType(character), character, isSubstring, position);
-        this.raw = character;
+        // Use the actual segment value for consistency
+        const validatedChar = segments[0]!.segment;
+
+        super(Char.getType(validatedChar), validatedChar, isSubstring, position);
+        this.raw = validatedChar;
     }
 
     public override toString(): string {
-        const rawChar = this.value;
-        switch (rawChar) {
-            // Return the escaped representation directly
-            case '\n': return '\\n';
-            case '\r': return '\\r';
-            case '\t': return '\\t';
-            // Return the character itself
-            default: return rawChar;
+        const value = Char.handleEscape(this.value);
+
+        // Check for other unprintable or special Unicode characters
+        // Using \p{Control} and \p{Unassigned} to identify characters that should be escaped
+        if (/\p{Control}/u.test(value)) {
+            return Array.from(value)
+                .map(cp => {
+                    const code = cp.codePointAt(0);
+                    if (code === undefined) return '';
+                    return `\\u{${code.toString(16).toUpperCase()}}`;
+                })
+                .join('');
         }
+
+        // Return the character as-is if it's a standard printable character
+        return value;
     }
 
     public get [Symbol.toStringTag](): string {
@@ -160,22 +207,40 @@ export class Char extends IChar {
      * Custom inspector for util.inspect.
      * @param depth The current recursion depth.
      * @param options The inspection options, which *now* correctly contains `stylize`.
-     * @param inspect The util.inspect function itself (useful for recursive calls).
+     * @param inspectFn The util.inspect function itself (useful for recursive calls).
      */
     [inspect.custom] = (depth: number, options: InspectOptions, inspectFn: Function): string => {
+        // Get the private stylize function from node:util.inspect
         const stylize = (options as any).stylize;
 
         // If recursion depth is exhausted, show a placeholder.
         if (depth < 0) return stylize(`[Char]`, 'special');
 
-        // Get the class name and stylize it. Using `this.constructor.name` is robust.
+        // Get the class name and stylize it.
         const CLASSNAME = stylize(this.constructor.name, 'special');
 
-        // Get the character value representation from `toString()` method.
-        const charString = `'${this.toString()}'`;
-        const charPadStart = charString.padStart(4, ' ')
-        const charPadEnd = charPadStart.padEnd(6, ' ');
-        const CHAR = stylize(`${charPadEnd}`, 'date');
+        // The character string to be displayed, including escapes for things like newlines.
+        const charString = this.toString();
+
+        // Calculate the visual width of the character.
+        const visualWidth = Char.getVisualWidth(charString);
+
+        // The total width of the content inside the padding, including the quotes
+        // +2 for the single quotes
+        const contentWidth = visualWidth + 2;
+
+        // Define a target total visual width for this section of the output. Let's use 8 for good spacing.
+        const targetWidth = TARGET_CHAR_DISPLAY_WIDTH;
+
+        // Calculate how many spaces are needed for padding based on visual width.
+        // We subtract the width of the (character + 2) for the single quotes.
+        const totalPadding = Math.max(0, targetWidth - contentWidth);
+        const paddingStart = Math.floor(totalPadding / 2);
+        const paddingEnd = Math.ceil(totalPadding / 2);
+
+        // Construct the final padded string.
+        const charPadded = ' '.repeat(paddingStart) + `'${charString}'` + ' '.repeat(paddingEnd);
+        const CHAR = stylize(charPadded, 'date');
 
         // Handle the position info if it exists.
         let IDX = '', POS = '';
@@ -184,76 +249,111 @@ export class Char extends IChar {
             const idxPadStart = `${this.position.index}`.padStart(2, ' ');
             const linPadStart = `${this.position.line}`.padStart(2, ' ');
             const colPadStart = `${this.position.column}`.padStart(2, ' ');
-            const linColInfo = `[ ${linPadStart} : ${colPadStart} ]`
+            const linColInfo = `[ ${linPadStart} : ${colPadStart} ]`;
             const posInfo = stylize(linColInfo, 'number');
-
             IDX = stylize(`[${idxPadStart}]`, 'number');
             POS = `, pos: ${posInfo}`;
         }
 
         // Get the type and stylize it.
-        const typePadEnd = this.type.padEnd(11, ' ');
+        const typeChar = this.type;
+        const typePadEnd = typeChar.padEnd(11, ' ');
         const typeInfo = stylize(typePadEnd, 'string');
         const charType = stylize(`CharType.`, 'special');
         const TYPE = `type: ${charType}${typeInfo}${POS}`;
 
         // Combine everything into the final string.
-        return `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
+        const result = `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
+        const resultObj = {
+            [`${result}`]: {
+                result: result,
+                visualWidth: visualWidth,
+                contentWidth: contentWidth,
+                paddingStart: paddingStart,
+                paddingEnd: paddingEnd,
+            }
+        };
+        Char.log({ resultObj });
+
+        return result;
+    };
+
+    /**
+     * Logs the name and value of the first property in the passed object.
+     * To use, pass an object with the variable as the key using shorthand.
+     * @example
+     * const myVar = 123;
+     * logger.log({ myVar }); // Logs "myVar = 123"
+     */
+    public static log(obj: { [key: string]: any; }): void {
+        // Get the name of the first variable (key) in the object.
+        const variableName = Object.keys(obj)[0];
+
+        if (variableName) {
+            // Get the corresponding value.
+            const value = obj[variableName];
+            const output = `${variableName} = ${value}`;
+            console.log(JSON.stringify(output, null, 2));
+
+            // Store the original object
+            this.DEBUG_INFO.push(obj);
+        }
     }
 
     // --- Character Analysis Methods ---
 
     public isEOF(): boolean {
-        return this.type === CharType.EOF;
+        return this.value === '';
     }
 
     public isNumber(): boolean {
-        return this.type === CharType.Number;
+        // \p{N} matches any kind of numeric character in any script
+        return /\p{N}/u.test(this.value);
     }
 
     public isLetter(): boolean {
-        return this.type === CharType.Letter;
+        // \p{L} matches any letter from any language
+        return /\p{L}/u.test(this.value);
     }
 
     public isLetterOrNumber(): boolean {
+        // Matches any letter or number in any script
         return this.isLetter() || this.isNumber();
     }
 
     public isNewLine(): boolean {
-        return this.type === CharType.NewLine;
+        // Matches new line characters
+        return /[\n\r\u2028\u2029]/u.test(this.value);
     }
 
     public isWhitespace(): boolean {
-        // A newline is also considered whitespace
-        return this.type === CharType.Whitespace || this.type === CharType.NewLine;
+        // \p{White_Space} includes all Unicode spaces, tabs, and line breaks
+        return /\p{White_Space}/u.test(this.value);
     }
 
     public isEmoji(): boolean {
-        return this.type === CharType.Emoji;
+        // \p{Emoji_Presentation} is the safest way to detect visual emojis
+        return /\p{Emoji_Presentation}/u.test(this.value);
     }
 
     public isCurrency(): boolean {
-        return this.type === CharType.Currency;
+        // \p{Sc} matches any currency symbol ($, €, ¥, ₿, etc.)
+        return /\p{Sc}/u.test(this.value);
     }
 
     public isPunctuation(): boolean {
-        const puncTypes = [
-            CharType.Punctuation, CharType.Exclamation, CharType.Comma,
-            CharType.Colon, CharType.SemiColon, CharType.Question, CharType.Dot
-        ];
-        return puncTypes.includes(this.type);
+        // Matches any punctuation symbol in any script
+        return /\p{P}/u.test(this.value);
     }
 
     public isSymbol(): boolean {
-        const symbolTypes = [
-            CharType.Symbol, CharType.Currency, CharType.Hash,
-            CharType.Percent, CharType.Plus, CharType.EqualSign
-        ];
-        return symbolTypes.includes(this.type);
+        // Matches any symbol in any script
+        return /\p{S}/u.test(this.value);
     }
 
     public isUnicode(): boolean {
-        return this.type === CharType.Unicode;
+        // Matches any non-ASCII character
+        return /[^\x00-\x7F]/g.test(this.value);
     }
 
     public isUndefined(): boolean {
@@ -261,21 +361,38 @@ export class Char extends IChar {
     }
 
     public isUpperCase(): boolean {
-        const char = this.toString();
-        return this.isLetter() && char === char.toUpperCase();
+        // \p{Lu} = Unicode Uppercase Letter
+        return /\p{Lu}/u.test(this.value);
     }
 
     public isLowerCase(): boolean {
-        const char = this.toString();
-        return this.isLetter() && char === char.toLowerCase();
+        // \p{Ll} = Unicode Lowercase Letter
+        return /\p{Ll}/u.test(this.value);
     }
 
     public getNumericValue(): number {
-        return this.isNumber() ? parseInt(this.toString(), 10) : -1;
+        const val = this.value;
+
+        // Check if the value is a non-digit value
+        const nonDigit = Char.handleNonDigit(val);
+        if (nonDigit !== IS_UNDEFINED) return nonDigit;
+
+        // Normalize the string. NFKD compatibility decomposition is a good choice.
+        const normalizedVal = val.normalize('NFKD');
+
+        // Use a regex to filter for standard digits after normalization
+        const digits = normalizedVal.replace(/[^0-9]/g, '');
+
+        // Basic check for standard digits 0-9
+        if (digits) return parseInt(digits, 10);
+
+        // For other Unicode numbers, you might return the code point 
+        // or use a library to get the actual decimal value
+        return IS_UNDEFINED;
     }
 
-    public charValue(): string {
-        return this.value;
+    public getValue(): Uint32Array {
+        return this._value;
     }
 
     // --- Static Factory ---
@@ -288,28 +405,22 @@ export class Char extends IChar {
      */
     public static fromString = (str: string): Char[] => {
         const chars: Char[] = [];
-        let line = 1;
-        let column = 1;
 
-        // Use Array.from(str) to correctly handle multi-byte Unicode characters
-        const characters = Array.from(str);
+        // Use Intl.Segmenter to iterate over graphemes (visual characters)
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        const segments = segmenter.segment(str);
 
-        for (let i = 0; i < characters.length; i++) {
-            const charValue = characters[i]!;
-            const position = new Position(i, line, column);
+        for (const { segment, index } of segments) {
+            // Call the Unicode-safe calculatePosition for the current byte index
+            // This ensures the line/column logic is consistent across both methods
+            const position = Char.calculatePosition(str, index);
 
-            chars.push(new Char(charValue, {
+            chars.push(new Char(segment, {
                 isSubstring: true,
                 position: position
             }));
-
-            if (charValue === '\n') {
-                line++;
-                column = 1;
-            } else {
-                column++;
-            }
         }
+
         return chars;
     };
 
@@ -320,12 +431,18 @@ export class Char extends IChar {
      * @param index The zero-based index of the character to locate.
      * @returns A Position object with the index, line, and column.
      */
-    public static calculatePosition = (text: string, index: number): Position => {
+    public static calculatePosition = (text: string, targetIndex: number): Position => {
         let line = 1;
         let column = 1;
 
-        for (let i = 0; i < index; i++) {
-            if (text[i] === '\n') {
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        const segments = segmenter.segment(text);
+
+        for (const { segment, index } of segments) {
+            if (index >= targetIndex) break;
+
+            // Correctly handle different line break types (e.g., \n or CRLF)
+            if (segment === '\n' || segment === '\r\n' || segment === '\r') {
                 line++;
                 column = 1;
             } else {
@@ -333,8 +450,70 @@ export class Char extends IChar {
             }
         }
 
-        return { index, line, column };
+        return new Position(targetIndex, line, column);
     };
+
+    /**
+     * Calculates the visual width of a string in a monospace terminal.
+     * This is a heuristic and may not be perfect for all characters or terminals.
+     * @param str The string to measure.
+     * @returns The visual width (typically 1 or 2 for most characters).
+     */
+    public static getVisualWidth(str: string): number {
+        // Handle specific multi-character escape representations first
+        if (Char.handleEscape(str)) return DOUBLE_WIDTH;
+
+        // The most reliable way to check for emojis is the Emoji_Presentation property.
+        // This correctly identifies graphemes like '⚔️' and '🎖️' as width 2.
+        if (/\p{Emoji}/u.test(str)) return DOUBLE_WIDTH;
+
+        // Fallback for other non-emoji wide characters (like CJK)
+        for (const char of str) {
+            const code = char.codePointAt(0);
+
+            // Skip control characters and zero-width components
+            if (!code || this.isZeroWidth(code)) continue;
+
+            // If any part of the grapheme is in the double-width list, the whole thing is double-width.
+            if (this.isDoubleWidth(code)) return DOUBLE_WIDTH;
+        }
+
+        // If no double-width, non-zero-width characters, it must be single-width.
+        return (str.length > 0) ? SINGLE_WIDTH : IS_NULL;
+    }
+
+    public static isMultiCharacter(str: string): boolean {
+        return str === '\\n' ||
+            str === '\\t' ||
+            str === '\\r' ||
+            str === '\\v' ||
+            str === '\\f';
+    }
+
+    public static isZeroWidth(code: number): boolean {
+        return (code <= 0x1F) ||                    // C0 controls
+            (code >= 0x7F && code <= 0x9F) ||       // C1 controls
+            (code >= 0x300 && code <= 0x36F) ||     // Combining Diacritical Marks
+            (code >= 0x200B && code <= 0x200F) ||   // Zero-width spaces
+            (code >= 0xFE00 && code <= 0xFE0F) ||   // Variation Selectors block
+            (code >= 0xFEFF && code <= 0xFEFF);     // Zero-width no-break space
+    }
+
+    public static isDoubleWidth(code: number): boolean {
+        // This list is a heuristic. The Emoji_Presentation check in getVisualWidth is more robust for emojis.
+        // This is primarily for full-width forms and CJK characters.
+        return (code >= 0x1100 && code <= 0x115F) ||    // Hangul Jamo
+            (code >= 0x2329 && code <= 0x232A) ||       // Left/Right Angle Bracket
+            (code >= 0x3040 && code <= 0x309F) ||       // Hiragana
+            (code >= 0x30A0 && code <= 0x30FF) ||       // Katakana
+            (code >= 0x4E00 && code <= 0x9FFF) ||       // CJK Unified Ideographs
+            (code >= 0xAC00 && code <= 0xD7A3) ||       // Hangul Syllables
+            (code >= 0xF900 && code <= 0xFAFF) ||       // CJK Compatibility Ideographs
+            (code >= 0xFE10 && code <= 0xFE19) ||       // Vertical Forms
+            (code >= 0xFE30 && code <= 0xFE6F) ||       // CJK Compatibility Forms
+            (code >= 0xFF00 && code <= 0xFFEF) ||       // Halfwidth and Fullwidth Forms
+            (code >= 0x1F300);                          // Most modern Emoji and Symbols
+    }
 
     /**
      * @method getType
@@ -348,8 +527,26 @@ export class Char extends IChar {
             if (predicate(char)) return type;
         }
         return CharType.Undefined;
+    };
+
+    public static handleEscape(value: any): string {
+        // Handle common single-character escapes
+        if (COMMON_ESCAPES[value]) return COMMON_ESCAPES[value];
+
+        return value;
+    }
+
+    public static handleNonDigit(value: any): number {
+        // Check if the value is in the numeral map.
+        if (NUMERAL_MAP[value] !== undefined) {
+            return NUMERAL_MAP[value];
+        }
+
+        return IS_UNDEFINED;
     }
 }
+
+
 
 
 
@@ -438,6 +635,7 @@ export enum CharType {
 
 
 
+
 //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ End of file: ./src/CharType.ts ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
 
@@ -504,6 +702,8 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
 
 
 
+
+
 //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ End of file: ./src/CharSpec.ts ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
 
@@ -521,47 +721,121 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
 import { Char } from './src/Char.ts';
 import { styleText, inspect, type InspectOptions } from 'node:util';
 
-const inspectOptions: InspectOptions = {
-    showHidden: false,
-    depth: null,
-    colors: true,
-    customInspect: true,
-    showProxy: false,
-    maxArrayLength: null,
-    maxStringLength: null,
-    breakLength: 180,
-    compact: true,
-    sorted: false,
-    getters: false,
-    numericSeparator: true,
-};
 
-const title = (str: string): void => {
-    console.log(styleText(['red', 'bold'], str));
+// Types
+interface TestContext {
+    str: string;
+    ltr?: string;
 }
+type TestNumber = 1 | 2 | 3 | 4 | 5;
+type TestFunction = (ctx: TestContext) => void;
 
-const format = (ch: any): string => {
-    return inspect(ch, inspectOptions);
+
+// Utility Functions
+const util = {
+    // Prints a new line on the console
+    insertReturn: (): void => {
+        console.log('\r');
+    },
+
+    // Inspects and displays a insertTitle on the console
+    insertTitle: (str: string): void => {
+        console.log(styleText(['red', 'bold'], str));
+    },
+
+    // Styles a string
+    style: (str: string): string => {
+        return styleText(['blue', 'bold'], str);
+    },
+
+    // Returns a stylized Char
+    inspect: (ch: Char): string => {
+        // node:util.inspect options
+        const inspectOptions: InspectOptions = {
+            showHidden: false,
+            depth: null,
+            colors: true,
+            customInspect: true,
+            showProxy: false,
+            maxArrayLength: null,
+            maxStringLength: null,
+            breakLength: 180,
+            compact: true,
+            sorted: false,
+            getters: false,
+            numericSeparator: true,
+        };
+
+        return inspect(ch, inspectOptions);
+    },
 };
 
-const test1 = (str: string): void => {
-    console.log();
-    const char = new Char(str);
-    title('CHARACTER TEST:');
-    console.log(`raw:\t${str}`);
-    console.log(`char:\tCharacter: ${format(char)}`);
-    console.log(`char:\tStored data: ${char.value}`);
-    console.log();
-};
+// Map of test functions
+const testMap: Record<TestNumber, TestFunction> = {
+    /**
+     * Creates a Char from a single str character, outputs result to console
+     */
+    1: ({ str }): void => {
+        if (str.length === 0) return;
+        const char = new Char(str);
+        util.insertTitle('CHARACTER TEST:');
 
-const test2 = (str: string, letter: string): void => {
-    const testFindCharacter = (chars: Char[], ltr: string): void => {
-        const ch = chars.find(char => char.charValue() === ltr);
+        const raw = `${str}`;
+        console.log(`raw:\tRaw String:\t${util.style(raw)}`);
+
+        const charStr = `${char}`;
+        console.log(`char:\tCharacter:\t${util.style(charStr)}`);
+
+        const numAsStr = `${char.getValue()}`;
+        console.log(`char:\tStored Value:\t${util.style(numAsStr)}`);
+
+        util.insertReturn();
+    },
+    
+    /**
+     * Creates a Char from a single character string and displays its ininspection on the console
+     */
+    2: ({ str }): void => {
+        if (str.length === 0) return;
+        const char = new Char(str);
+        util.insertTitle('NON-DIGIT CHARACTER TEST:');
+
+        const raw = `${str}`;
+        console.log(`raw:\tRaw String:\t${util.style(raw)}`);
+
+        const charStr = `${char}`;
+        console.log(`char:\tCharacter:\t${util.style(charStr)}`);
+
+        const numAsStr = `${char.getValue()}`;
+        console.log(`char:\tStored Value:\t${util.style(numAsStr)}`);
+
+        const numericAsStr = `${char.getNumericValue()}`;
+        console.log(`char:\tNumeric Value:\t${util.style(numericAsStr)}`);
+
+        util.insertReturn();
+    },
+    
+    /**
+     * Finds a character within a Char[], outputs result to console
+     */
+    3: ({ str, ltr }): void => {
+        if (!ltr) return;
+        const chars = Char.fromString(str);
+        // Normalize both strings to a standard form (e.g., 'NFC' is common)
+        // Ensure 'ltr' is a single grapheme cluster if intended
+        const normalizedLtr = ltr.normalize('NFC');
+
+        const ch = chars.find(char => {
+            // Normalize the character from the array as well before comparison
+            return char.value.normalize('NFC') === normalizedLtr;
+        });
+
         if (ch) {
-            console.log();
-            title('FIND CHARACTER TEST:');
+            //insertReturn();
+            util.insertTitle('FIND CHARACTER TEST:');
             console.log(`--- Found the character '${ltr}' ---`);
-            console.log(`Value: ${ch.charValue()}`);
+            console.log(`Value: ${ch.value}`);
+            // Consider using locale-aware checks for case
             console.log(`Is it uppercase? ${ch.isUpperCase()}`);
             if (ch.position) {
                 console.log(`Index in string: ${ch.position.index}`);
@@ -569,48 +843,75 @@ const test2 = (str: string, letter: string): void => {
                 console.log(`Column number: ${ch.position.column}`);
             }
         }
-        console.log();
-    };
+        util.insertReturn();
+    },
 
-    const testIterate = (chars: Char[]): void => {
-        console.log();
-        title('ITERATE TEST:');
+    /**
+     * Iterates over Char[] to find whitespace, outputs result to console
+     */
+    4: ({ str }): void => {
+        const chars = Char.fromString(str);
+        util.insertTitle('ITERATE TEST:');
+
         chars.forEach(ch => {
-            if (ch.isWhitespace() && ch.position) {
-                console.log(`Found a whitespace character at line ${ch.position.line}, column ${ch.position.column}`);
-            }
-            if (ch.isNewLine() && ch.position) {
-                console.log(`Found a newline character at line ${ch.position.line}, column ${ch.position.column}`);
+            const val = ch.value;
+            const pos = ch.position;
+
+            if (pos) {
+                // Unicode-safe Whitespace Check
+                // Matches any character with the "White_Space" property (spaces, tabs, etc.)
+                const isWhitespace = /\p{White_Space}/u.test(val);
+
+                // Unicode-safe insertReturn Check
+                // Specific check for line terminators (\n, \r, U+2028 Line Separator, U+2029 Paragraph Separator)
+                const isinsertReturn = /[\n\r\u2028\u2029]/.test(val) || val === '\u0085';
+
+                if (isWhitespace) {
+                    console.log(`Found a whitespace character at line ${pos.line}, column ${pos.column}`);
+                }
+                if (isinsertReturn) {
+                    console.log(`Found a insertReturn character at line ${pos.line}, column ${pos.column}`);
+                }
             }
         });
-        console.log();
-    };
+        util.insertReturn();
+    },
 
-    const testForOf = (chars: Char[]): void => {
-        console.log();
-
-        title('FOR OF TEST:')
+    /**
+     * Use For-Of to iterate over Char[], outputs each Char to console
+     */
+    5: ({ str }): void => {
+        const chars = Char.fromString(str);
+        util.insertTitle('FOR OF TEST:');
         for (const ch of chars) {
-            console.log(format(ch));
+            console.log(util.inspect(ch));
         }
 
-        console.log();
-    };
-    
-    const characters = Char.fromString(str);
-    testFindCharacter(characters, letter);
-    testIterate(characters);
-    testForOf(characters);
+        util.insertReturn();;
+    },
+} 
 
-};
+// Execute tests
+const runTest = (str: string, tests: TestNumber[], ltr?: string): void => {
+    const ctx = { str, ltr };
+    tests.forEach(num => testMap[num](ctx));
+}
 
+// Test strings
 const charA = 'A';
-const charB = '💩';
-const myString = `Hello, World!\nThis is line 2.`;
+const charB = '🪖';
+const myStringA = `Hello, World!\nThis is line 2.`;
+const myStringB = `🪖\t\⚔️ 🎖️\n🪖\t\🎖️ 💪`;
 
-test1(charA);
-test1(charB);
-test2(myString, 'W');
+// Execute tests with test strings
+console.clear();
+runTest(charA, [1]);
+runTest(charB, [1]);
+runTest('Ⅷ', [2]);
+runTest('⑩', [2]);
+runTest(myStringA, [3, 4, 5], 'W');
+runTest(myStringB, [3, 4, 5], '⚔️');
+
 
 
 
