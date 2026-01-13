@@ -105,9 +105,6 @@ describe('Char Class', () => {
             expect(new Char('\t').toString()).toBe('\\t');
             expect(new Char('X').toString()).toBe('X');
         });
-
-        // Note: Testing the [inspect.custom] logic usually requires 
-        // passing a mock stylize function if you want to test the exact output string.
     });
 
     describe('Char Class > Exhaustive Type Checks', () => {
