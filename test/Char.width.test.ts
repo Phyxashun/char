@@ -53,7 +53,7 @@ describe('Char.getVisualWidth', () => {
   // Dynamically generate a test for each case
   for (const { description, char, expected } of testCases) {
     it(description, () => {
-      const result = Char.getVisualWidth(char);
+      const result = Char.calculateVisualWidth(char);
       expect(result).toBe(expected);
     });
   }
