@@ -8,10 +8,12 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
     [CharType.EOF, (char: string) => char === ''],
     [CharType.NewLine, (char: string) => /[\n\r]/.test(char)],
     [CharType.Whitespace, (char: string) => /[ \t\f\v]/.test(char)],
-    [CharType.Letter, (char: string) => /\p{L}/u.test(char)],
-    [CharType.Number, (char: string) => /\p{N}/u.test(char)],
-    [CharType.Emoji, (char: string) => /\p{Emoji_Presentation}/v.test(char)],
-    [CharType.Currency, (char: string) => /\p{Sc}/u.test(char)],
+
+    [CharType.Letter, (char: string) => /\p{L}/v.test(char)],
+    [CharType.Number, (char: string) => /\p{N}/v.test(char)],
+    [CharType.Emoji, (char: string) => /\p{Emoji}/v.test(char)],
+    [CharType.Currency, (char: string) => /\p{Sc}/v.test(char)],
+
     [CharType.Hash, (char: string) => char === '#'],
     [CharType.Percent, (char: string) => char === '%'],
     [CharType.Slash, (char: string) => char === '/'],
@@ -44,8 +46,11 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
     [CharType.SemiColon, (char: string) => char === ';'],
     [CharType.Colon, (char: string) => char === ':'],
     [CharType.Pipe, (char: string) => char === '|'],
-    [CharType.Punctuation, (char: string) => /\p{P}/u.test(char)],
-    [CharType.Symbol, (char: string) => /\p{S}/u.test(char)],
-    [CharType.Unicode, (char: string) => /\P{ASCII}/u.test(char)],
+
+    [CharType.Punctuation, (char: string) => /\p{P}/v.test(char)],
+
+    [CharType.Symbol, (char: string) => /\p{S}/v.test(char)],
+
+    [CharType.Unicode, (char: string) => /\P{ASCII}/v.test(char)],
 ]);
 

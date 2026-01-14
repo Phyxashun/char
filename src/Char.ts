@@ -51,6 +51,7 @@ const IS_UNDEFINED = -1;
 const IS_NULL = 0;
 const SINGLE_WIDTH = 1;
 const DOUBLE_WIDTH = 2;
+const TRIPLE_WIDTH = 3;
 const COMMON_ESCAPES: Record<string, string> = {
     '\n': '\\n',
     '\r': '\\r',
@@ -91,6 +92,7 @@ export class IChar {
     // Use Uint32Array to safely store full 21-bit Unicode code points
     protected _value: Uint32Array;
     protected _isSubstring: boolean;
+    public maxWidth: number;
     public position: Position;
 
     constructor(type?: CharType, value?: string, isSubstring?: boolean, position?: Position) {
@@ -98,6 +100,7 @@ export class IChar {
         this._value = new Uint32Array(0);
         this.value = value ?? ' ';
         this._isSubstring = isSubstring ?? false;
+        this.maxWidth = 0;
         this.position = position ? position : new Position();
     }
 
@@ -141,6 +144,8 @@ export class IChar {
  */
 export class Char extends IChar {
     private readonly raw: string;
+
+    // DEBUGGING
     public static DEBUG_INFO: any[] = [];
 
     /**
@@ -216,7 +221,7 @@ export class Char extends IChar {
         const charString = this.toString();
 
         // Calculate the visual width of the character.
-        const visualWidth = Char.getVisualWidth(charString);
+        const visualWidth = Char.calculateVisualWidth(this.value);
 
         // The total width of the content inside the padding, including the quotes
         // +2 for the single quotes
@@ -257,27 +262,32 @@ export class Char extends IChar {
 
         // Combine everything into the final string.
         const result = `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
-        const resultObj = {
-            [`${result}`]: {
-                result: result,
-                visualWidth: visualWidth,
-                contentWidth: contentWidth,
-                paddingStart: paddingStart,
-                paddingEnd: paddingEnd,
-            }
-        };
-        Char.log({ resultObj });
+        const totalWidth = paddingStart + contentWidth + paddingEnd;
+
+        // DEBUGGING
+        Char.DEBUG_INFO.push(Char.createObject(`${CLASSNAME}${IDX}`, {
+            maxWidth: this.maxWidth,
+            visualWidth: visualWidth,
+            contentWidth: contentWidth,
+            paddingStart: paddingStart,
+            paddingEnd: paddingEnd,
+            totalPadding: totalPadding,
+            charPadded: charPadded,
+            targetWidth: targetWidth,
+            totalWidth: totalWidth,
+            match: targetWidth === totalWidth,
+            result: result,
+        }));
 
         return result;
     };
 
-    /**
-     * Logs the name and value of the first property in the passed object.
-     * To use, pass an object with the variable as the key using shorthand.
-     * @example
-     * const myVar = 123;
-     * logger.log({ myVar }); // Logs "myVar = 123"
-     */
+    // DEBUGGING
+    public static createObject(key: string, value: any): { [key]: any; } {
+        return { [key]: value };
+    }
+
+    // DEBUGGING
     public static log(obj: { [key: string]: any; }): void {
         // Get the name of the first variable (key) in the object.
         const variableName = Object.keys(obj)[0];
@@ -289,7 +299,7 @@ export class Char extends IChar {
             console.log(JSON.stringify(output, null, 2));
 
             // Store the original object
-            this.DEBUG_INFO.push(obj);
+            this.DEBUG_INFO.push(obj[variableName]);
         }
     }
 
@@ -398,20 +408,32 @@ export class Char extends IChar {
      */
     public static fromString = (str: string): Char[] => {
         const chars: Char[] = [];
+        let maxWidth: number = 0;
 
-        // Use Intl.Segmenter to iterate over graphemes (visual characters)
+        // 1. First, determine the final maxWidth (longest line)
+        const lines = str.split(/\r?\n/);
+        for (const line of lines) {
+            const currentLineWidth = Char.calculateVisualWidth(line);
+            if (currentLineWidth > maxWidth) maxWidth = currentLineWidth;
+        }
+
+        // 2. Iterate over graphemes and build the initial array
         const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
         const segments = segmenter.segment(str);
 
         for (const { segment, index } of segments) {
-            // Call the Unicode-safe calculatePosition for the current byte index
-            // This ensures the line/column logic is consistent across both methods
             const position = Char.calculatePosition(str, index);
 
             chars.push(new Char(segment, {
                 isSubstring: true,
                 position: position
             }));
+        }
+
+        // 3. Final Step: Assign the computed maxWidth to every character object
+        // This ensures all instances reference the same global maximum
+        for (const c of chars) {
+            c.maxWidth = maxWidth;
         }
 
         return chars;
@@ -452,27 +474,30 @@ export class Char extends IChar {
      * @param str The string to measure.
      * @returns The visual width (typically 1 or 2 for most characters).
      */
-    public static getVisualWidth(str: string): number {
+    public static calculateVisualWidth(str: string): number {
         // Handle specific multi-character escape representations first
-        if (Char.handleEscape(str)) return DOUBLE_WIDTH;
+        const escaped = Char.handleEscape(str);
+        if (escaped !== str) return escaped.length;
 
-        // The most reliable way to check for emojis is the Emoji_Presentation property.
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        const segments = Array.from(segmenter.segment(str));
+        if (segments.length === 0) return IS_NULL;
+        const char = segments[0]!.segment;
+
+        // If the grapheme contains \uFE0F, it's being forced to 2-column emoji presentation.
+        if (char.includes('\uFE0F')) return DOUBLE_WIDTH;
+
         // This correctly identifies graphemes like '⚔️' and '🎖️' as width 2.
-        if (/\p{Emoji}/u.test(str)) return DOUBLE_WIDTH;
+        if (/\p{Emoji_Presentation}/v.test(char)) return DOUBLE_WIDTH;
 
         // Fallback for other non-emoji wide characters (like CJK)
-        for (const char of str) {
-            const code = char.codePointAt(0);
+        const codePoint = char.codePointAt(0);
 
-            // Skip control characters and zero-width components
-            if (!code || this.isZeroWidth(code)) continue;
-
-            // If any part of the grapheme is in the double-width list, the whole thing is double-width.
-            if (this.isDoubleWidth(code)) return DOUBLE_WIDTH;
-        }
+        // If any part of the grapheme is in the double-width list, the whole thing is double-width.
+        if (codePoint && this.isDoubleWidth(codePoint)) return DOUBLE_WIDTH;
 
         // If no double-width, non-zero-width characters, it must be single-width.
-        return (str.length > 0) ? SINGLE_WIDTH : IS_NULL;
+        return SINGLE_WIDTH;
     }
 
     public static isMultiCharacter(str: string): boolean {
@@ -493,7 +518,7 @@ export class Char extends IChar {
     }
 
     public static isDoubleWidth(code: number): boolean {
-        // This list is a heuristic. The Emoji_Presentation check in getVisualWidth is more robust for emojis.
+        // This list is a heuristic. The Emoji_Presentation check in calculateVisualWidth is more robust for emojis.
         // This is primarily for full-width forms and CJK characters.
         return (code >= 0x1100 && code <= 0x115F) ||    // Hangul Jamo
             (code >= 0x2329 && code <= 0x232A) ||       // Left/Right Angle Bracket

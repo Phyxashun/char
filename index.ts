@@ -11,44 +11,56 @@ interface TestContext {
 }
 type TestNumber = 1 | 2 | 3 | 4 | 5;
 type TestFunction = (ctx: TestContext) => void;
-
-// node:util.inspect options
-const inspectOptions: InspectOptions = {
-    showHidden: false,
-    depth: null,
-    colors: true,
-    customInspect: true,
-    showProxy: false,
-    maxArrayLength: null,
-    maxStringLength: null,
-    breakLength: 180,
-    compact: true,
-    sorted: false,
-    getters: false,
-    numericSeparator: true,
-};
+type Style = string | string[];
 
 // Utility Functions
 const util = {
+    // node:util.inspect options
+    inspectOptions: () => {
+        return {
+            showHidden: false,
+            depth: null,
+            colors: true,
+            customInspect: true,
+            showProxy: false,
+            maxArrayLength: null,
+            maxStringLength: null,
+            breakLength: 180,
+            compact: true,
+            sorted: false,
+            getters: false,
+            numericSeparator: true,
+        };
+    },
+
     // Prints a new line on the console
     insertReturn: (): void => {
         console.log('\r');
     },
 
-    // Inspects and displays a insertTitle on the console
-    insertTitle: (str: string): void => {
-        console.log(styleText(['red', 'bold'], str));
+    // Inspects and displays a titl on the console
+    insertTitle: (data: any): void => {
+        console.log(styleText(['red', 'bold'], data));
     },
 
-    // Styles a string
-    style: (str: string): string => {
-        return styleText(['blue', 'bold'], str);
+    // Returns stylized string
+    style: (data: any): string => {
+        return styleText(['blue', 'bold'], data);
     },
 
-    // Returns a stylized Char
-    inspect: (ch: Char): string => {
-        return inspect(ch, inspectOptions);
+    // Returns inspected data
+    inspect: (data: any): string => {
+        return inspect(data, util.inspectOptions());
     },
+
+    // Output an object with stylized properties to the console
+    deepLog: (data: any): void => {
+        const output = inspect(data, util.inspectOptions());
+
+        // This regex handles both the standard \u001b and the 
+        // way inspect sometimes formats them as \x1B
+        console.log(output.replace(/\\u001b|\\x1b/gi, '\x1b'));
+    }
 };
 
 // Map of test functions
@@ -193,23 +205,5 @@ const myStringB = `🪖\t\⚔️ 🎖️\n🪖\t\🎖️ 💪`;
 //runTest(myStringA, [3, 4, 5], 'W');
 runTest(myStringB, [5], '⚔️');
 
-const fullLog = JSON.stringify(Char.DEBUG_INFO, null, 2)
-    .replace(/\\u001b/g, '\x1b') // Converts escaped unicode back to real ESC
-    .replace(/\\n/g, '\n');      // Fixes any literal newlines
-
-console.log(fullLog);
-
-function deepLog(data: any) {
-    const output = inspect(data, {
-        depth: null,
-        colors: true,
-        breakLength: 100, // Keeps long ANSI strings on one line if possible
-    });
-
-    // This regex handles both the standard \u001b and the 
-    // way inspect sometimes formats them as \x1B
-    console.log(output.replace(/\\u001b|\\x1b/gi, '\x1b'));
-}
-
 // Now you can just do:
-deepLog(Char.DEBUG_INFO);
+util.deepLog(Char.DEBUG_INFO);
