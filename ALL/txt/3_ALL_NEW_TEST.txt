@@ -5,137 +5,84 @@
 
 
 
-// ./test/Char.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Char, Position } from '../src/Char';
+import { inspect } from 'node:util';
 
-import { describe, it, expect } from 'vitest';
-import { Char, Position, IChar } from '../src/Char';
-import { CharType } from '../src/CharType';
+describe('Char Custom Inspector', () => {
+    const mockStylize = vi.fn((str: string, styleType: string) => {
+        // A simple mock that wraps the content to make assertions easier.
+        return `[${styleType}:${str}]`;
+    });
 
-describe('Position Class', () => {
-    it('initializes with default values', () => {
-        const pos = new Position();
-        expect(pos.index).toBe(-1);
+    const mockOptions = {
+        stylize: mockStylize,
+    };
+
+    const mockInspectFn = vi.fn();
+
+    // Clear mocks before each test to ensure isolation
+    beforeEach(() => {
+        mockStylize.mockClear();
+        mockInspectFn.mockClear();
+    });
+
+    it('formats a standard standalone character with correct padding', () => {
+        const char = new Char('!');
+        const result = (char as any)[inspect.custom](1, mockOptions, mockInspectFn);
+
+        /**
+         * LOGIC CHECK:
+         * visualWidth('!') -> 1.
+         * contentWidth -> 1 (char) + 2 (quotes) = 3.
+         * targetWidth -> 8.
+         * totalPadding -> 8 - 3 = 5.
+         * paddingStart -> floor(2.5) = 2.
+         * paddingEnd -> ceil(2.5) = 3.
+         * Final padded string: "  '!'   "
+         */
+        expect(result).toContain("[date:  '!'   ]");
+        expect(result).toContain('[special:Char]');
+    });
+
+    it('formats a substring character with position and index info', () => {
+        const char = new Char('G', {
+            isSubstring: true,
+            position: new Position(10, 2, 5)
+        });
+        const result = (char as any)[inspect.custom](1, mockOptions, mockInspectFn);
+
+        // Check for the index part
+        expect(result).toContain('[number:[10]]');
+        // Check for the line:column part, ensuring spacing from padStart is correct
+        expect(result).toContain('[number:[  2 :  5 ]]');
+    });
+
+    it('handles depth exhaustion gracefully', () => {
+        const char = new Char('X');
+        const result = (char as any)[inspect.custom](-1, mockOptions, mockInspectFn);
+        expect(result).toBe('[special:[Char]]');
+    });
+
+    it('escapes and pads newline characters correctly', () => {
+        const char = new Char('\n');
+        const result = (char as any)[inspect.custom](1, mockOptions, mockInspectFn);
+
+        /**
+         * LOGIC CHECK:
+         * toString() -> '\\n'
+         * visualWidth -> handleEscape gives '\\\\n', length is 2.
+         * contentWidth -> 2 (char) + 2 (quotes) = 4.
+         * targetWidth -> 8.
+         * totalPadding -> 8 - 4 = 4.
+         * paddingStart -> 2.
+         * paddingEnd -> 2.
+         * Final padded string: "  '\\n'  "
+         */
+        expect(result).toContain("[date:  '\\n'  ]");
     });
 });
 
-describe('IChar Class', () => {
-    it('throws error if value is more than one character', () => {
-        // Initialize with a valid char first so the constructor doesn't throw
-        const ichar = new IChar(CharType.Letter, 'A');
-
-        // Now testing the setter specifically
-        expect(() => { ichar.value = 'abc' }).toThrow("Input must be a single Unicode character.");
-    });
-
-    it('correctly handles unicode value storage', () => {
-        const ichar = new IChar(CharType.Letter, 'A');
-        expect(ichar.value).toBe('A');
-    });
-});
-
-describe('Char Class', () => {
-    describe('Constructor & Validation', () => {
-        it('creates a valid Char instance', () => {
-            const char = new Char('A');
-            expect(char.value).toBe('A');
-            expect(char.type).toBe(CharType.Letter);
-        });
-
-        it('throws error for empty or multi-char strings', () => {
-            expect(() => new Char('')).toThrow();
-            expect(() => new Char('AB')).toThrow();
-        });
-    });
-
-    describe('Character Analysis Methods', () => {
-        it('identifies types correctly via instance methods', () => {
-            expect(new Char('1').isNumber()).toBe(true);
-            expect(new Char('a').isLetter()).toBe(true);
-            expect(new Char('\n').isNewLine()).toBe(true);
-            expect(new Char(' ').isWhitespace()).toBe(true);
-            expect(new Char('!').isPunctuation()).toBe(true);
-            expect(new Char('😊').isEmoji()).toBe(true);
-        });
-
-        it('handles casing', () => {
-            const upper = new Char('G');
-            const lower = new Char('g');
-            expect(upper.isUpperCase()).toBe(true);
-            expect(upper.isLowerCase()).toBe(false);
-            expect(lower.isLowerCase()).toBe(true);
-        });
-
-        it('returns numeric values', () => {
-            expect(new Char('5').getNumericValue()).toBe(5);
-            expect(new Char('A').getNumericValue()).toBe(-1);
-        });
-    });
-
-    describe('Static Methods', () => {
-        it('fromString: decomposes string into Char array with correct positions', () => {
-            const str = 'A\nB';
-            const chars = Char.fromString(str);
-
-            expect(chars).toHaveLength(3);
-
-            // 'A'
-            expect(chars[0].value).toBe('A');
-            expect(chars[0].position).toMatchObject({ index: 0, line: 1, column: 1 });
-
-            // '\n'
-            expect(chars[1].value).toBe('\n');
-            expect(chars[1].position).toMatchObject({ index: 1, line: 1, column: 2 });
-
-            // 'B'
-            expect(chars[2].value).toBe('B');
-            expect(chars[2].position).toMatchObject({ index: 2, line: 2, column: 1 });
-        });
-
-        it('calculatePosition: computes coordinates correctly', () => {
-            const text = "Hello\nWorld";
-            const pos = Char.calculatePosition(text, 6); // Index 6 is 'W'
-            expect(pos.line).toBe(2);
-            expect(pos.column).toBe(1);
-        });
-    });
-
-    describe('Custom Inspection', () => {
-        it('formats string representation for special characters', () => {
-            expect(new Char('\n').toString()).toBe('\\n');
-            expect(new Char('\t').toString()).toBe('\\t');
-            expect(new Char('X').toString()).toBe('X');
-        });
-    });
-
-    describe('Char Class > Exhaustive Type Checks', () => {
-        const typeTests = [
-            { char: 'a', method: 'isLetter', expected: true },
-            { char: '1', method: 'isNumber', expected: true },
-            { char: ' ', method: 'isWhitespace', expected: true },
-            { char: '\n', method: 'isNewLine', expected: true },
-            { char: '!', method: 'isPunctuation', expected: true },
-            { char: '$', method: 'isCurrency', expected: true },
-            { char: '+', method: 'isSymbol', expected: true },
-            { char: '\u0000', method: 'isControl', expected: true },
-            { char: '😊', method: 'isEmoji', expected: true },
-            { char: '\u0301', method: 'isModifier', expected: true }, // Combining Acute Accent
-        ];
-
-        typeTests.forEach(({ char, method, expected }) => {
-            it(`${method}() should return ${expected} for "${char}"`, () => {
-                const c = new Char(char);
-                expect((c as any)[method]()).toBe(expected);
-            });
-        });
-
-        it('identifies Undefined type correctly', () => {
-            // Create a char with a null/empty type to trigger Undefined
-            const c = new Char('A');
-            (c as any).type = 0; // Assuming 0 is CharType.Undefined
-            expect(c.isUndefined()).toBe(true);
-        });
-    });
-});
 
 
 
@@ -152,47 +99,76 @@ describe('Char Class', () => {
 
 
 
-// ./test/CharSpec.test.ts
+// ./test/Char.width.test.ts
 
 import { describe, it, expect } from 'vitest';
-import { CharSpec } from '../src/CharSpec';
-import { CharType } from '../src/CharType';
+import { Char } from '../src/Char';
 
-describe('CharSpec Map', () => {
-    const check = (type: CharType, char: string) => CharSpec.get(type)!(char);
+// The method now returns a number: 0 (for null/undefined width), 1 (single), or 2 (double).
+const IS_NULL = 0;
+const SINGLE_WIDTH = 1;
+const DOUBLE_WIDTH = 2;
 
-    it('identifies Letters correctly', () => {
-        expect(check(CharType.Letter, 'a')).toBe(true);
-        expect(check(CharType.Letter, 'Z')).toBe(true);
-        expect(check(CharType.Letter, 'ñ')).toBe(true);
-        expect(check(CharType.Letter, '1')).toBe(false);
+describe('Char.calculateVisualWidth', () => {
+    const testCases: { description: string, char: string, expected: number; }[] = [
+        // 1. Basic Single-Width Characters
+        { description: 'should return 1 for a standard letter', char: 'A', expected: SINGLE_WIDTH },
+        { description: 'should return 1 for a standard number', char: '1', expected: SINGLE_WIDTH },
+        { description: 'should return 1 for a standard symbol', char: '!', expected: SINGLE_WIDTH },
+        { description: 'should return 1 for a box-drawing character', char: '─', expected: SINGLE_WIDTH },
+        { description: 'should return 1 for a Roman numeral symbol', char: 'Ⅷ', expected: SINGLE_WIDTH },
+
+        // 2. Escaped String Representations (custom logic)
+        // The handleEscape method returns '\\n', which has a length of 2.
+        { description: 'should return 2 for escaped newline string representation', char: '\n', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for escaped tab string representation', char: '\t', expected: DOUBLE_WIDTH },
+
+        // 3. Emoji and Symbols (Double Width)
+        { description: 'should return 2 for a common emoji (Emoji_Presentation)', char: '😂', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for a symbol with variation selector', char: '⚔️', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for a medal with variation selector', char: '🎖️', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for the military helmet (Emoji property)', char: '🪖', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for the bicep emoji (Emoji property)', char: '💪', expected: DOUBLE_WIDTH },
+
+        // 4. Full-width and CJK characters (Double Width)
+        { description: 'should return 2 for a full-width Latin letter', char: 'Ａ', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for a full-width number', char: '５', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for a Japanese Hiragana character', char: 'あ', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for a Korean Hangul syllable', char: '한', expected: DOUBLE_WIDTH },
+        { description: 'should return 2 for a Chinese Han character', char: '字', expected: DOUBLE_WIDTH },
+
+        // 5. Combining Marks (should not add width)
+        { description: 'should return 1 for a letter with a combining mark', char: 'é', expected: SINGLE_WIDTH },
+        { description: 'should return 1 for a letter with multiple combining marks', char: 'ő', expected: SINGLE_WIDTH },
+        // NOTE: An emoji with a skin-tone modifier is still a single grapheme of width 2
+        { description: 'should return 2 for an emoji with a combining mark', char: '😂🏾', expected: DOUBLE_WIDTH },
+
+        // 6. Edge Cases
+        { description: 'should return 0 for an empty string', char: '', expected: IS_NULL },
+        { description: 'should return 1 for a single space', char: ' ', expected: SINGLE_WIDTH },
+    ];
+
+    // Dynamically generate a test for each case
+    for (const { description, char, expected } of testCases) {
+        it(description, () => {
+            const result = Char.calculateVisualWidth(char);
+            expect(result).toBe(expected);
+        });
+    }
+
+    it('should correctly handle a complex grapheme cluster like a family emoji', () => {
+        // This is a single visual character composed of 7 code points!
+        const familyEmoji = '👨‍👩‍👧‍👦';
+        expect(Char.calculateVisualWidth(familyEmoji)).toBe(DOUBLE_WIDTH);
     });
 
-    it('identifies Numbers correctly', () => {
-        expect(check(CharType.Number, '5')).toBe(true);
-        expect(check(CharType.Number, '¼')).toBe(true); // Unicode numeric
-        expect(check(CharType.Number, 'a')).toBe(false);
-    });
-
-    it('identifies Emojis correctly', () => {
-        expect(check(CharType.Emoji, '🚀')).toBe(true);
-        expect(check(CharType.Emoji, '💩')).toBe(true);
-        expect(check(CharType.Emoji, 'A')).toBe(false);
-    });
-
-    it('identifies Whitespace and Newlines', () => {
-        expect(check(CharType.NewLine, '\n')).toBe(true);
-        expect(check(CharType.NewLine, '\r')).toBe(true);
-        expect(check(CharType.Whitespace, ' ')).toBe(true);
-        expect(check(CharType.Whitespace, '\t')).toBe(true);
-    });
-
-    it('identifies Currency symbols', () => {
-        expect(check(CharType.Currency, '$')).toBe(true);
-        expect(check(CharType.Currency, '€')).toBe(true);
-        expect(check(CharType.Currency, '¥')).toBe(true);
+    it('should return 0 for an empty string', () => {
+        // This test covers the IS_NULL return path (line 505)
+        expect(Char.calculateVisualWidth('')).toBe(0);
     });
 });
+
+
 
 
 
@@ -230,6 +206,7 @@ describe('CharType Enum', () => {
 
 
 
+
 //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ End of file: ./test/CharType.test.ts ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
 
@@ -242,13 +219,13 @@ describe('CharType Enum', () => {
 
 
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Char, Position } from '../src/Char';
 import { inspect } from 'node:util';
 
 describe('Char Custom Inspector', () => {
     const mockStylize = vi.fn((str: string, styleType: string) => {
-        // Note: The mock returns [type:value] with NO extra spaces
+        // A simple mock that wraps the content to make assertions easier.
         return `[${styleType}:${str}]`;
     });
 
@@ -258,20 +235,28 @@ describe('Char Custom Inspector', () => {
 
     const mockInspectFn = vi.fn();
 
-    it('formats a standard standalone character correctly', () => {
+    // Clear mocks before each test to ensure isolation
+    beforeEach(() => {
+        mockStylize.mockClear();
+        mockInspectFn.mockClear();
+    });
+
+    it('formats a standard standalone character with correct padding', () => {
         const char = new Char('!');
         const result = (char as any)[inspect.custom](1, mockOptions, mockInspectFn);
 
-        expect(result).toContain('[special:Char]');
-
         /**
-         * LOGIC CHECK: 
-         * toString() is '!' (len 3). 
-         * padStart(4) adds 1 space to the left -> " '!'"
-         * padEnd(4) sees length 4, does nothing.
-         * result: [date: '!'] (Space is AFTER the colon, part of the value)
+         * LOGIC CHECK:
+         * visualWidth('!') -> 1.
+         * contentWidth -> 1 (char) + 2 (quotes) = 3.
+         * targetWidth -> 8.
+         * totalPadding -> 8 - 3 = 5.
+         * paddingStart -> floor(2.5) = 2.
+         * paddingEnd -> ceil(2.5) = 3.
+         * Final padded string: "  '!'   "
          */
-        expect(result).toContain("[date: '!'  ]");
+        expect(result).toContain("[date:  '!'   ]");
+        expect(result).toContain('[special:Char]');
     });
 
     it('formats a substring character with position and index info', () => {
@@ -279,33 +264,39 @@ describe('Char Custom Inspector', () => {
             isSubstring: true,
             position: new Position(10, 2, 5)
         });
-
         const result = (char as any)[inspect.custom](1, mockOptions, mockInspectFn);
 
+        // Check for the index part
         expect(result).toContain('[number:[10]]');
-        // Note: ensure the spacing here matches your Char.ts template exactly
+        // Check for the line:column part, ensuring spacing from padStart is correct
         expect(result).toContain('[number:[  2 :  5 ]]');
     });
 
-    it('handles depth exhaustion', () => {
+    it('handles depth exhaustion gracefully', () => {
         const char = new Char('X');
         const result = (char as any)[inspect.custom](-1, mockOptions, mockInspectFn);
         expect(result).toBe('[special:[Char]]');
     });
 
-    it('escapes newline characters in the inspector output', () => {
+    it('escapes and pads newline characters correctly', () => {
         const char = new Char('\n');
         const result = (char as any)[inspect.custom](1, mockOptions, mockInspectFn);
 
         /**
          * LOGIC CHECK:
-         * toString() is '\\n' (len 4 including quotes).
-         * padStart(4) and padEnd(4) do nothing.
-         * result: [date:'\\n'] (NO space after colon because value didn't need padding)
+         * toString() -> '\\n'
+         * visualWidth -> handleEscape gives '\\\\n', length is 2.
+         * contentWidth -> 2 (char) + 2 (quotes) = 4.
+         * targetWidth -> 8.
+         * totalPadding -> 8 - 4 = 4.
+         * paddingStart -> 2.
+         * paddingEnd -> 2.
+         * Final padded string: "  '\\n'  "
          */
-        expect(result).toContain("[date:'\\n'  ]");
+        expect(result).toContain("[date:  '\\n'  ]");
     });
 });
+
 
 
 
@@ -327,69 +318,71 @@ describe('Char Custom Inspector', () => {
 import { describe, it, expect } from 'vitest';
 import { Char } from '../src/Char';
 
-// Replicating the enum from the method for clear test cases
-enum Width {
-  Undefined,
-  Single,
-  Double
-}
+// The method now returns a number: 0 (for null/undefined width), 1 (single), or 2 (double).
+const IS_NULL = 0;
+const SINGLE_WIDTH = 1;
+const DOUBLE_WIDTH = 2;
 
-describe('Char.getVisualWidth', () => {
-
-  // Test data covering a wide range of Unicode character types
-  const testCases: { description: string, char: string, expected: Width; }[] = [
-
+describe('Char.calculateVisualWidth', () => {
+  const testCases: { description: string, char: string, expected: number; }[] = [
     // 1. Basic Single-Width Characters
-    { description: 'should return Single for a standard letter', char: 'A', expected: Width.Single },
-    { description: 'should return Single for a standard number', char: '1', expected: Width.Single },
-    { description: 'should return Single for a standard symbol', char: '!', expected: Width.Single },
-    { description: 'should return Single for a box-drawing character', char: '─', expected: Width.Single },
-    { description: 'should return Single for a Roman numeral symbol', char: 'Ⅷ', expected: Width.Single },
+    { description: 'should return 1 for a standard letter', char: 'A', expected: SINGLE_WIDTH },
+    { description: 'should return 1 for a standard number', char: '1', expected: SINGLE_WIDTH },
+    { description: 'should return 1 for a standard symbol', char: '!', expected: SINGLE_WIDTH },
+    { description: 'should return 1 for a box-drawing character', char: '─', expected: SINGLE_WIDTH },
+    { description: 'should return 1 for a Roman numeral symbol', char: 'Ⅷ', expected: SINGLE_WIDTH },
 
-    // 2. Escaped String Representations (your custom logic)
-    { description: 'should return Double for escaped newline string', char: '\\n', expected: Width.Double },
-    { description: 'should return Double for escaped tab string', char: '\\t', expected: Width.Double },
+    // 2. Escaped String Representations (custom logic)
+    // The handleEscape method returns '\\n', which has a length of 2.
+    { description: 'should return 2 for escaped newline string representation', char: '\n', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for escaped tab string representation', char: '\t', expected: DOUBLE_WIDTH },
 
     // 3. Emoji and Symbols (Double Width)
-    { description: 'should return Double for a common emoji (Emoji_Presentation)', char: '😂', expected: Width.Double },
-    { description: 'should return Double for a symbol with variation selector', char: '⚔️', expected: Width.Double },
-    { description: 'should return Double for a medal with variation selector', char: '🎖️', expected: Width.Double },
-    { description: 'should return Double for the military helmet (Emoji property)', char: '🪖', expected: Width.Double },
-    { description: 'should return Double for the bicep emoji (Emoji property)', char: '💪', expected: Width.Double },
+    { description: 'should return 2 for a common emoji (Emoji_Presentation)', char: '😂', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for a symbol with variation selector', char: '⚔️', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for a medal with variation selector', char: '🎖️', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for the military helmet (Emoji property)', char: '🪖', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for the bicep emoji (Emoji property)', char: '💪', expected: DOUBLE_WIDTH },
 
     // 4. Full-width and CJK characters (Double Width)
-    { description: 'should return Double for a full-width Latin letter', char: 'Ａ', expected: Width.Double },
-    { description: 'should return Double for a full-width number', char: '５', expected: Width.Double },
-    { description: 'should return Double for a Japanese Hiragana character', char: 'あ', expected: Width.Double },
-    { description: 'should return Double for a Korean Hangul syllable', char: '한', expected: Width.Double },
-    { description: 'should return Double for a Chinese Han character', char: '字', expected: Width.Double },
+    { description: 'should return 2 for a full-width Latin letter', char: 'Ａ', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for a full-width number', char: '５', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for a Japanese Hiragana character', char: 'あ', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for a Korean Hangul syllable', char: '한', expected: DOUBLE_WIDTH },
+    { description: 'should return 2 for a Chinese Han character', char: '字', expected: DOUBLE_WIDTH },
 
     // 5. Combining Marks (should not add width)
-    { description: 'should return Single for a letter with a combining mark', char: 'é', expected: Width.Single },
-    { description: 'should return Single for a letter with multiple combining marks', char: 'ő', expected: Width.Single },
-    { description: 'should return Double for an emoji with a combining mark', char: '😂🏾', expected: Width.Double },
+    { description: 'should return 1 for a letter with a combining mark', char: 'é', expected: SINGLE_WIDTH },
+    { description: 'should return 1 for a letter with multiple combining marks', char: 'ő', expected: SINGLE_WIDTH },
+    // NOTE: An emoji with a skin-tone modifier is still a single grapheme of width 2
+    { description: 'should return 2 for an emoji with a combining mark', char: '😂🏾', expected: DOUBLE_WIDTH },
 
     // 6. Edge Cases
-    { description: 'should return Undefined for an empty string', char: '', expected: Width.Undefined },
-    { description: 'should return Single for a single space', char: ' ', expected: Width.Single },
+    { description: 'should return 0 for an empty string', char: '', expected: IS_NULL },
+    { description: 'should return 1 for a single space', char: ' ', expected: SINGLE_WIDTH },
   ];
 
   // Dynamically generate a test for each case
   for (const { description, char, expected } of testCases) {
     it(description, () => {
-      const result = Char.getVisualWidth(char);
+      const result = Char.calculateVisualWidth(char);
       expect(result).toBe(expected);
     });
   }
 
-  // A specific test to demonstrate a complex grapheme cluster
   it('should correctly handle a complex grapheme cluster like a family emoji', () => {
     // This is a single visual character composed of 7 code points!
     const familyEmoji = '👨‍👩‍👧‍👦';
-    expect(Char.getVisualWidth(familyEmoji)).toBe(Width.Double);
+    expect(Char.calculateVisualWidth(familyEmoji)).toBe(DOUBLE_WIDTH);
   });
 
+  it('should return 0 for an empty string', () => {
+    // This test covers the IS_NULL return path (line 505)
+    expect(Char.calculateVisualWidth('')).toBe(0);
+  });
 });
+
+
 
 
 

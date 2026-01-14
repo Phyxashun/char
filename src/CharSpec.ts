@@ -6,7 +6,8 @@ type CharSpecFn = (char: string) => boolean;
 
 export const CharSpec: Map<CharType, CharSpecFn> = new Map([
     [CharType.EOF, (char: string) => char === ''],
-    [CharType.NewLine, (char: string) => /[\n\r]/.test(char)],
+    //[CharType.NewLine, (char: string) => /[\n\r]/.test(char)],
+    [CharType.NewLine, (char: string) => /[\n\r\u2028\u2029]/u.test(char)],
     [CharType.Whitespace, (char: string) => /[ \t\f\v]/.test(char)],
 
     [CharType.Letter, (char: string) => /\p{L}/v.test(char)],
@@ -53,4 +54,5 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
 
     [CharType.Unicode, (char: string) => /\P{ASCII}/v.test(char)],
 ]);
+
 

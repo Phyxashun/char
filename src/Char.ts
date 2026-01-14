@@ -51,7 +51,6 @@ const IS_UNDEFINED = -1;
 const IS_NULL = 0;
 const SINGLE_WIDTH = 1;
 const DOUBLE_WIDTH = 2;
-const TRIPLE_WIDTH = 3;
 const COMMON_ESCAPES: Record<string, string> = {
     '\n': '\\n',
     '\r': '\\r',
@@ -145,9 +144,6 @@ export class IChar {
 export class Char extends IChar {
     private readonly raw: string;
 
-    // DEBUGGING
-    public static DEBUG_INFO: any[] = [];
-
     /**
      * Creates an instance of a Char.
      * @param value The single character string.
@@ -181,6 +177,10 @@ export class Char extends IChar {
     public override toString(): string {
         const value = Char.handleEscape(this.value);
 
+        // If handleEscape already returned an escaped representation (like '\\n'),
+        // we can return it directly. Otherwise, check for other control characters.
+        if (value !== this.value) return value;
+
         // Check for other unprintable or special Unicode characters
         // Using \p{Control} and \p{Unassigned} to identify characters that should be escaped
         if (/\p{Control}/u.test(value)) {
@@ -195,6 +195,10 @@ export class Char extends IChar {
 
         // Return the character as-is if it's a standard printable character
         return value;
+    }
+
+    public getRawString(): string {
+        return this.raw;
     }
 
     public get [Symbol.toStringTag](): string {
@@ -261,62 +265,21 @@ export class Char extends IChar {
         const TYPE = `type: ${charType}${typeInfo}${POS}`;
 
         // Combine everything into the final string.
-        const result = `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
-        const totalWidth = paddingStart + contentWidth + paddingEnd;
-
-        // DEBUGGING
-        Char.DEBUG_INFO.push(Char.createObject(`${CLASSNAME}${IDX}`, {
-            maxWidth: this.maxWidth,
-            visualWidth: visualWidth,
-            contentWidth: contentWidth,
-            paddingStart: paddingStart,
-            paddingEnd: paddingEnd,
-            totalPadding: totalPadding,
-            charPadded: charPadded,
-            targetWidth: targetWidth,
-            totalWidth: totalWidth,
-            match: targetWidth === totalWidth,
-            result: result,
-        }));
-
-        return result;
+        return `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
     };
-
-    // DEBUGGING
-    public static createObject(key: string, value: any): { [key]: any; } {
-        return { [key]: value };
-    }
-
-    // DEBUGGING
-    public static log(obj: { [key: string]: any; }): void {
-        // Get the name of the first variable (key) in the object.
-        const variableName = Object.keys(obj)[0];
-
-        if (variableName) {
-            // Get the corresponding value.
-            const value = obj[variableName];
-            const output = `${variableName} = ${value}`;
-            console.log(JSON.stringify(output, null, 2));
-
-            // Store the original object
-            this.DEBUG_INFO.push(obj[variableName]);
-        }
-    }
 
     // --- Character Analysis Methods ---
 
     public isEOF(): boolean {
-        return this.value === '';
+        return this.type === CharType.EOF;
     }
 
     public isNumber(): boolean {
-        // \p{N} matches any kind of numeric character in any script
-        return /\p{N}/u.test(this.value);
+        return this.type === CharType.Number;
     }
 
     public isLetter(): boolean {
-        // \p{L} matches any letter from any language
-        return /\p{L}/u.test(this.value);
+        return this.type === CharType.Letter;
     }
 
     public isLetterOrNumber(): boolean {
@@ -325,38 +288,31 @@ export class Char extends IChar {
     }
 
     public isNewLine(): boolean {
-        // Matches new line characters
-        return /[\n\r\u2028\u2029]/u.test(this.value);
+        return this.type === CharType.NewLine;
     }
 
     public isWhitespace(): boolean {
-        // \p{White_Space} includes all Unicode spaces, tabs, and line breaks
-        return /\p{White_Space}/u.test(this.value);
+        return this.type === CharType.Whitespace;
     }
 
     public isEmoji(): boolean {
-        // \p{Emoji_Presentation} is the safest way to detect visual emojis
-        return /\p{Emoji_Presentation}/u.test(this.value);
+        return this.type === CharType.Emoji;
     }
 
     public isCurrency(): boolean {
-        // \p{Sc} matches any currency symbol ($, €, ¥, ₿, etc.)
-        return /\p{Sc}/u.test(this.value);
+        return this.type === CharType.Currency;
     }
 
     public isPunctuation(): boolean {
-        // Matches any punctuation symbol in any script
-        return /\p{P}/u.test(this.value);
+        return this.type === CharType.Punctuation;
     }
 
     public isSymbol(): boolean {
-        // Matches any symbol in any script
-        return /\p{S}/u.test(this.value);
+        return this.type === CharType.Symbol;
     }
 
     public isUnicode(): boolean {
-        // Matches any non-ASCII character
-        return /[^\x00-\x7F]/g.test(this.value);
+        return this.type === CharType.Unicode;
     }
 
     public isUndefined(): boolean {
@@ -540,7 +496,9 @@ export class Char extends IChar {
      * @returns 
      */
     public static getType = (char: string): CharType => {
-        if (char === undefined || char === null) return CharType.Error;
+        if (char === undefined) return CharType.Undefined;
+        if (char === null) return CharType.Error;
+
         for (const [type, predicate] of CharSpec) {
             if (predicate(char)) return type;
         }
@@ -563,4 +521,3 @@ export class Char extends IChar {
         return IS_UNDEFINED;
     }
 }
-

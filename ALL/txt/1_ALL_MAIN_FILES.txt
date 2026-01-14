@@ -98,6 +98,7 @@ export class IChar {
     // Use Uint32Array to safely store full 21-bit Unicode code points
     protected _value: Uint32Array;
     protected _isSubstring: boolean;
+    public maxWidth: number;
     public position: Position;
 
     constructor(type?: CharType, value?: string, isSubstring?: boolean, position?: Position) {
@@ -105,6 +106,7 @@ export class IChar {
         this._value = new Uint32Array(0);
         this.value = value ?? ' ';
         this._isSubstring = isSubstring ?? false;
+        this.maxWidth = 0;
         this.position = position ? position : new Position();
     }
 
@@ -148,7 +150,6 @@ export class IChar {
  */
 export class Char extends IChar {
     private readonly raw: string;
-    public static DEBUG_INFO: any[] = [];
 
     /**
      * Creates an instance of a Char.
@@ -183,6 +184,10 @@ export class Char extends IChar {
     public override toString(): string {
         const value = Char.handleEscape(this.value);
 
+        // If handleEscape already returned an escaped representation (like '\\n'),
+        // we can return it directly. Otherwise, check for other control characters.
+        if (value !== this.value) return value;
+
         // Check for other unprintable or special Unicode characters
         // Using \p{Control} and \p{Unassigned} to identify characters that should be escaped
         if (/\p{Control}/u.test(value)) {
@@ -197,6 +202,10 @@ export class Char extends IChar {
 
         // Return the character as-is if it's a standard printable character
         return value;
+    }
+
+    public getRawString(): string {
+        return this.raw;
     }
 
     public get [Symbol.toStringTag](): string {
@@ -223,7 +232,7 @@ export class Char extends IChar {
         const charString = this.toString();
 
         // Calculate the visual width of the character.
-        const visualWidth = Char.getVisualWidth(charString);
+        const visualWidth = Char.calculateVisualWidth(this.value);
 
         // The total width of the content inside the padding, including the quotes
         // +2 for the single quotes
@@ -263,57 +272,21 @@ export class Char extends IChar {
         const TYPE = `type: ${charType}${typeInfo}${POS}`;
 
         // Combine everything into the final string.
-        const result = `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
-        const resultObj = {
-            [`${result}`]: {
-                result: result,
-                visualWidth: visualWidth,
-                contentWidth: contentWidth,
-                paddingStart: paddingStart,
-                paddingEnd: paddingEnd,
-            }
-        };
-        Char.log({ resultObj });
-
-        return result;
+        return `${CLASSNAME}${IDX}: ${CHAR}: { ${TYPE} }`;
     };
-
-    /**
-     * Logs the name and value of the first property in the passed object.
-     * To use, pass an object with the variable as the key using shorthand.
-     * @example
-     * const myVar = 123;
-     * logger.log({ myVar }); // Logs "myVar = 123"
-     */
-    public static log(obj: { [key: string]: any; }): void {
-        // Get the name of the first variable (key) in the object.
-        const variableName = Object.keys(obj)[0];
-
-        if (variableName) {
-            // Get the corresponding value.
-            const value = obj[variableName];
-            const output = `${variableName} = ${value}`;
-            console.log(JSON.stringify(output, null, 2));
-
-            // Store the original object
-            this.DEBUG_INFO.push(obj);
-        }
-    }
 
     // --- Character Analysis Methods ---
 
     public isEOF(): boolean {
-        return this.value === '';
+        return this.type === CharType.EOF;
     }
 
     public isNumber(): boolean {
-        // \p{N} matches any kind of numeric character in any script
-        return /\p{N}/u.test(this.value);
+        return this.type === CharType.Number;
     }
 
     public isLetter(): boolean {
-        // \p{L} matches any letter from any language
-        return /\p{L}/u.test(this.value);
+        return this.type === CharType.Letter;
     }
 
     public isLetterOrNumber(): boolean {
@@ -322,38 +295,31 @@ export class Char extends IChar {
     }
 
     public isNewLine(): boolean {
-        // Matches new line characters
-        return /[\n\r\u2028\u2029]/u.test(this.value);
+        return this.type === CharType.NewLine;
     }
 
     public isWhitespace(): boolean {
-        // \p{White_Space} includes all Unicode spaces, tabs, and line breaks
-        return /\p{White_Space}/u.test(this.value);
+        return this.type === CharType.Whitespace;
     }
 
     public isEmoji(): boolean {
-        // \p{Emoji_Presentation} is the safest way to detect visual emojis
-        return /\p{Emoji_Presentation}/u.test(this.value);
+        return this.type === CharType.Emoji;
     }
 
     public isCurrency(): boolean {
-        // \p{Sc} matches any currency symbol ($, €, ¥, ₿, etc.)
-        return /\p{Sc}/u.test(this.value);
+        return this.type === CharType.Currency;
     }
 
     public isPunctuation(): boolean {
-        // Matches any punctuation symbol in any script
-        return /\p{P}/u.test(this.value);
+        return this.type === CharType.Punctuation;
     }
 
     public isSymbol(): boolean {
-        // Matches any symbol in any script
-        return /\p{S}/u.test(this.value);
+        return this.type === CharType.Symbol;
     }
 
     public isUnicode(): boolean {
-        // Matches any non-ASCII character
-        return /[^\x00-\x7F]/g.test(this.value);
+        return this.type === CharType.Unicode;
     }
 
     public isUndefined(): boolean {
@@ -405,20 +371,32 @@ export class Char extends IChar {
      */
     public static fromString = (str: string): Char[] => {
         const chars: Char[] = [];
+        let maxWidth: number = 0;
 
-        // Use Intl.Segmenter to iterate over graphemes (visual characters)
+        // 1. First, determine the final maxWidth (longest line)
+        const lines = str.split(/\r?\n/);
+        for (const line of lines) {
+            const currentLineWidth = Char.calculateVisualWidth(line);
+            if (currentLineWidth > maxWidth) maxWidth = currentLineWidth;
+        }
+
+        // 2. Iterate over graphemes and build the initial array
         const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
         const segments = segmenter.segment(str);
 
         for (const { segment, index } of segments) {
-            // Call the Unicode-safe calculatePosition for the current byte index
-            // This ensures the line/column logic is consistent across both methods
             const position = Char.calculatePosition(str, index);
 
             chars.push(new Char(segment, {
                 isSubstring: true,
                 position: position
             }));
+        }
+
+        // 3. Final Step: Assign the computed maxWidth to every character object
+        // This ensures all instances reference the same global maximum
+        for (const c of chars) {
+            c.maxWidth = maxWidth;
         }
 
         return chars;
@@ -459,27 +437,30 @@ export class Char extends IChar {
      * @param str The string to measure.
      * @returns The visual width (typically 1 or 2 for most characters).
      */
-    public static getVisualWidth(str: string): number {
+    public static calculateVisualWidth(str: string): number {
         // Handle specific multi-character escape representations first
-        if (Char.handleEscape(str)) return DOUBLE_WIDTH;
+        const escaped = Char.handleEscape(str);
+        if (escaped !== str) return escaped.length;
 
-        // The most reliable way to check for emojis is the Emoji_Presentation property.
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        const segments = Array.from(segmenter.segment(str));
+        if (segments.length === 0) return IS_NULL;
+        const char = segments[0]!.segment;
+
+        // If the grapheme contains \uFE0F, it's being forced to 2-column emoji presentation.
+        if (char.includes('\uFE0F')) return DOUBLE_WIDTH;
+
         // This correctly identifies graphemes like '⚔️' and '🎖️' as width 2.
-        if (/\p{Emoji}/u.test(str)) return DOUBLE_WIDTH;
+        if (/\p{Emoji_Presentation}/v.test(char)) return DOUBLE_WIDTH;
 
         // Fallback for other non-emoji wide characters (like CJK)
-        for (const char of str) {
-            const code = char.codePointAt(0);
+        const codePoint = char.codePointAt(0);
 
-            // Skip control characters and zero-width components
-            if (!code || this.isZeroWidth(code)) continue;
-
-            // If any part of the grapheme is in the double-width list, the whole thing is double-width.
-            if (this.isDoubleWidth(code)) return DOUBLE_WIDTH;
-        }
+        // If any part of the grapheme is in the double-width list, the whole thing is double-width.
+        if (codePoint && this.isDoubleWidth(codePoint)) return DOUBLE_WIDTH;
 
         // If no double-width, non-zero-width characters, it must be single-width.
-        return (str.length > 0) ? SINGLE_WIDTH : IS_NULL;
+        return SINGLE_WIDTH;
     }
 
     public static isMultiCharacter(str: string): boolean {
@@ -500,7 +481,7 @@ export class Char extends IChar {
     }
 
     public static isDoubleWidth(code: number): boolean {
-        // This list is a heuristic. The Emoji_Presentation check in getVisualWidth is more robust for emojis.
+        // This list is a heuristic. The Emoji_Presentation check in calculateVisualWidth is more robust for emojis.
         // This is primarily for full-width forms and CJK characters.
         return (code >= 0x1100 && code <= 0x115F) ||    // Hangul Jamo
             (code >= 0x2329 && code <= 0x232A) ||       // Left/Right Angle Bracket
@@ -522,7 +503,9 @@ export class Char extends IChar {
      * @returns 
      */
     public static getType = (char: string): CharType => {
-        if (char === undefined || char === null) return CharType.Error;
+        if (char === undefined) return CharType.Undefined;
+        if (char === null) return CharType.Error;
+
         for (const [type, predicate] of CharSpec) {
             if (predicate(char)) return type;
         }
@@ -545,7 +528,6 @@ export class Char extends IChar {
         return IS_UNDEFINED;
     }
 }
-
 
 
 
@@ -656,12 +638,15 @@ type CharSpecFn = (char: string) => boolean;
 
 export const CharSpec: Map<CharType, CharSpecFn> = new Map([
     [CharType.EOF, (char: string) => char === ''],
-    [CharType.NewLine, (char: string) => /[\n\r]/.test(char)],
+    //[CharType.NewLine, (char: string) => /[\n\r]/.test(char)],
+    [CharType.NewLine, (char: string) => /[\n\r\u2028\u2029]/u.test(char)],
     [CharType.Whitespace, (char: string) => /[ \t\f\v]/.test(char)],
-    [CharType.Letter, (char: string) => /\p{L}/u.test(char)],
-    [CharType.Number, (char: string) => /\p{N}/u.test(char)],
-    [CharType.Emoji, (char: string) => /\p{Emoji_Presentation}/v.test(char)],
-    [CharType.Currency, (char: string) => /\p{Sc}/u.test(char)],
+
+    [CharType.Letter, (char: string) => /\p{L}/v.test(char)],
+    [CharType.Number, (char: string) => /\p{N}/v.test(char)],
+    [CharType.Emoji, (char: string) => /\p{Emoji}/v.test(char)],
+    [CharType.Currency, (char: string) => /\p{Sc}/v.test(char)],
+
     [CharType.Hash, (char: string) => char === '#'],
     [CharType.Percent, (char: string) => char === '%'],
     [CharType.Slash, (char: string) => char === '/'],
@@ -694,10 +679,14 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
     [CharType.SemiColon, (char: string) => char === ';'],
     [CharType.Colon, (char: string) => char === ':'],
     [CharType.Pipe, (char: string) => char === '|'],
-    [CharType.Punctuation, (char: string) => /\p{P}/u.test(char)],
-    [CharType.Symbol, (char: string) => /\p{S}/u.test(char)],
-    [CharType.Unicode, (char: string) => /\P{ASCII}/u.test(char)],
+
+    [CharType.Punctuation, (char: string) => /\p{P}/v.test(char)],
+
+    [CharType.Symbol, (char: string) => /\p{S}/v.test(char)],
+
+    [CharType.Unicode, (char: string) => /\P{ASCII}/v.test(char)],
 ]);
+
 
 
 
@@ -719,122 +708,180 @@ export const CharSpec: Map<CharType, CharSpecFn> = new Map([
 // ./src/index.ts
 
 import { Char } from './src/Char.ts';
-import { styleText, inspect, type InspectOptions } from 'node:util';
+import { styleText, inspect, promisify } from 'node:util';
+import * as readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
 
+// Enumerations
+
+/**
+ * Defines the available test identifiers.
+ * Using an enum provides clear, readable names for the tests.
+ */
+enum Test {
+    one = 1,
+    two = 2,
+    three = 3,
+    four = 4,
+    five = 5,
+}
 
 // Types
+
+/**
+ * The context object passed to each test function, containing the
+ * string to be tested and an optional letter.
+ * @property str The primary string input for the test.
+ * @property ltr An optional secondary character or string for tests that require it (e.g., searching).
+ */
 interface TestContext {
     str: string;
     ltr?: string;
 }
+
+/**
+ * Defines the structure for a test case definition.
+ * It specifies the input strings and which test(s) to run.
+ * @property str The primary string input for the test.
+ * @property ltr An optional secondary character or string.
+ * @property tests A single TestNumber or an array of TestNumbers to execute.
+ */
+interface TestDefContext {
+    str: string;
+    ltr?: string;
+    tests: TestNumber | TestNumber[];
+}
+
+/** 
+ * A union type representing the valid numbers for a test case. 
+ */
 type TestNumber = 1 | 2 | 3 | 4 | 5;
+
+/** 
+ * A function that executes a specific test scenario. 
+ */
 type TestFunction = (ctx: TestContext) => void;
 
-// node:util.inspect options
-const inspectOptions: InspectOptions = {
-    showHidden: false,
-    depth: null,
-    colors: true,
-    customInspect: true,
-    showProxy: false,
-    maxArrayLength: null,
-    maxStringLength: null,
-    breakLength: 180,
-    compact: true,
-    sorted: false,
-    getters: false,
-    numericSeparator: true,
-};
+//Utility Functions
 
-// Utility Functions
+/**
+ * A collection of helper functions for logging and formatting output.
+ */
 const util = {
-    // Prints a new line on the console
+    /** Configuration options for node's `inspect` utility. */
+    inspectOptions: {
+        showHidden: false,
+        depth: null,
+        colors: true,
+        customInspect: true,
+        showProxy: false,
+        maxArrayLength: null,
+        maxStringLength: null,
+        breakLength: 180,
+        compact: true,
+        sorted: false,
+        getters: false,
+        numericSeparator: true,
+    },
+    /** Prints a new line to the console. */
     insertReturn: (): void => {
         console.log('\r');
     },
-
-    // Inspects and displays a insertTitle on the console
-    insertTitle: (str: string): void => {
-        console.log(styleText(['red', 'bold'], str));
+    /** Displays a styled title on the console. */
+    insertTitle: (data: any): void => {
+        console.log(styleText(['red', 'bold'], data));
     },
-
-    // Styles a string
-    style: (str: string): string => {
-        return styleText(['blue', 'bold'], str);
+    /** Returns a stylized string for console output. */
+    style: (data: any): string => {
+        return styleText(['blue', 'bold'], data);
     },
+    /** Returns a string representation of an object, formatted for inspection. */
+    inspect: (data: any): string => {
+        return inspect(data, util.inspectOptions);
+    },
+    /**
+     * Outputs a deeply inspected object to the console with proper color formatting.
+     * This fixes an issue where escape codes might be double-escaped.
+     */
+    deepLog: (data: any): void => {
+        const output = inspect(data, util.inspectOptions);
+        // This regex handles both the standard \u001b and the
+        // way inspect sometimes formats them as \x1B
+        console.log(output.replace(/\\u001b|\\x1b/gi, '\x1b'));
+    },
+    /** Executes a set of tests based on a test definition context. */
+    runTest: (testDefCtx: TestDefContext): void => {
+        const { str, ltr, tests } = testDefCtx;
+        // Normalize `tests` to always be an array for consistent processing.
+        const testsArray = Array.isArray(tests) ? tests : [tests];
+        const testCtx: TestContext = { str, ltr };
 
-    // Returns a stylized Char
-    inspect: (ch: Char): string => {
-        return inspect(ch, inspectOptions);
+        testsArray.forEach((testNum: TestNumber) => testFunctions[testNum](testCtx));
     },
 };
 
-// Map of test functions
-const testMap: Record<TestNumber, TestFunction> = {
+/**
+ * A map of test implementations, where each key is a `TestNumber`
+ * and the value is the corresponding test function.
+ */
+const testFunctions: Record<TestNumber, TestFunction> = {
     /**
-     * Creates a Char from a single str character, outputs result to console
+     * Test 1: Creates a Char from a single character and outputs its raw,
+     * character, and stored value representations.
      */
-    1: ({ str }): void => {
+    [Test.one]: ({ str }: TestContext): void => {
         if (str.length === 0) return;
         const char = new Char(str);
         util.insertTitle('CHARACTER TEST:');
-
         const raw = `${str}`;
         console.log(`raw:\tRaw String:\t${util.style(raw)}`);
-
         const charStr = `${char}`;
         console.log(`char:\tCharacter:\t${util.style(charStr)}`);
-
         const numAsStr = `${char.getValue()}`;
         console.log(`char:\tStored Value:\t${util.style(numAsStr)}`);
-
         util.insertReturn();
+
     },
 
     /**
-     * Creates a Char from a single character string and displays its ininspection on the console
+     * Test 2: Creates a Char and displays its numeric value,
+     * which is useful for non-digit characters.
      */
-    2: ({ str }): void => {
+    [Test.two]: ({ str }: TestContext): void => {
         if (str.length === 0) return;
         const char = new Char(str);
         util.insertTitle('NON-DIGIT CHARACTER TEST:');
-
         const raw = `${str}`;
         console.log(`raw:\tRaw String:\t${util.style(raw)}`);
-
         const charStr = `${char}`;
         console.log(`char:\tCharacter:\t${util.style(charStr)}`);
-
         const numAsStr = `${char.getValue()}`;
         console.log(`char:\tStored Value:\t${util.style(numAsStr)}`);
-
         const numericAsStr = `${char.getNumericValue()}`;
         console.log(`char:\tNumeric Value:\t${util.style(numericAsStr)}`);
-
         util.insertReturn();
     },
 
     /**
-     * Finds a character within a Char[], outputs result to console
+     * Test 3: Finds a specific character within a string and displays its
+     * properties, such as value, case, and position.
      */
-    3: ({ str, ltr }): void => {
+    [Test.three]: ({ str, ltr }: TestContext): void => {
         if (!ltr) return;
         const chars = Char.fromString(str);
         // Normalize both strings to a standard form (e.g., 'NFC' is common)
+
         // Ensure 'ltr' is a single grapheme cluster if intended
         const normalizedLtr = ltr.normalize('NFC');
-
         const ch = chars.find(char => {
             // Normalize the character from the array as well before comparison
             return char.value.normalize('NFC') === normalizedLtr;
         });
 
         if (ch) {
-            //insertReturn();
             util.insertTitle('FIND CHARACTER TEST:');
             console.log(`--- Found the character '${ltr}' ---`);
             console.log(`Value: ${ch.value}`);
-            // Consider using locale-aware checks for case
             console.log(`Is it uppercase? ${ch.isUpperCase()}`);
             if (ch.position) {
                 console.log(`Index in string: ${ch.position.index}`);
@@ -846,9 +893,10 @@ const testMap: Record<TestNumber, TestFunction> = {
     },
 
     /**
-     * Iterates over Char[] to find whitespace, outputs result to console
+     * Test 4: Iterates over a string to find and report the
+     * position of whitespace and newline characters.
      */
-    4: ({ str }): void => {
+    [Test.four]: ({ str }: TestContext): void => {
         const chars = Char.fromString(str);
         util.insertTitle('ITERATE TEST:');
 
@@ -864,10 +912,10 @@ const testMap: Record<TestNumber, TestFunction> = {
                 // Unicode-safe insertReturn Check
                 // Specific check for line terminators (\n, \r, U+2028 Line Separator, U+2029 Paragraph Separator)
                 const isinsertReturn = /[\n\r\u2028\u2029]/.test(val) || val === '\u0085';
-
                 if (isWhitespace) {
                     console.log(`Found a whitespace character at line ${pos.line}, column ${pos.column}`);
                 }
+
                 if (isinsertReturn) {
                     console.log(`Found a insertReturn character at line ${pos.line}, column ${pos.column}`);
                 }
@@ -877,60 +925,100 @@ const testMap: Record<TestNumber, TestFunction> = {
     },
 
     /**
-     * Use For-Of to iterate over Char[], outputs each Char to console
+     * Test 5: Demonstrates iterating over the `Char[]` array using a
+     * for...of loop and inspecting each character.
      */
-    5: ({ str }): void => {
+    [Test.five]: ({ str }: TestContext): void => {
         const chars = Char.fromString(str);
         util.insertTitle('FOR OF TEST:');
         for (const ch of chars) {
             console.log(util.inspect(ch));
         }
-
         util.insertReturn();;
     },
 };
 
-// Execute tests
-const runTest = (str: string, tests: TestNumber[], ltr?: string): void => {
-    const ctx = { str, ltr };
-    tests.forEach(num => testMap[num](ctx));
+/**
+ * A map of test definitions, where each key is a `TestNumber` and the value
+ * is a `TestDefContext` object describing the test case.
+ */
+const testDefinitions: Record<number, TestDefContext> = {
+    [1]: { str: 'A', tests: 1 },
+    [2]: { str: '🪖', tests: [Test.one, Test.two] },
+    [3]: { str: `Hello, World!\nThis is line 2.`, ltr: 'W', tests: [3, 4, 5] },
+    [4]: { str: `🪖⚔️🎖️🪖🎖️💪`, ltr: '⚔️', tests: Test.five },
+    [5]: { str: '', ltr: '', tests: 1 },
+    [6]: { str: 'rgba(100, 250, 255, 0.5)', tests: 5 },
 };
 
-// Test strings
-const charA = 'A';
-const charB = '🪖';
-const myStringA = `Hello, World!\nThis is line 2.`;
-const myStringB = `🪖\t\⚔️ 🎖️\n🪖\t\🎖️ 💪`;
+/**
+ * The main entry point for the script.
+ * It iterates through all defined tests and executes them.
+ */
+const runTest = (ctx?: RunContext) => {
+    if (ctx !== undefined) {
+        const testsArray = Array.isArray(ctx) ? ctx : [ctx];
+        for (const test of testsArray) {
+            const testDefCtx = testDefinitions[test] as TestDefContext;
+            util.runTest(testDefCtx);
+        }
+    }
 
-// Execute tests with test strings
-//console.clear();
-//runTest(charA, [1]);
-//runTest(charB, [1]);
-//runTest('Ⅷ', [2]);
-//runTest('⑩', [2]);
-//runTest(myStringA, [3, 4, 5], 'W');
-runTest(myStringB, [5], '⚔️');
+    if (ctx === undefined) {
+        for (const testDefCtx of Object.values(testDefinitions)) {
+            util.runTest(testDefCtx);
+        }
+    }
+};
 
-const fullLog = JSON.stringify(Char.DEBUG_INFO, null, 2)
-    .replace(/\\u001b/g, '\x1b') // Converts escaped unicode back to real ESC
-    .replace(/\\n/g, '\n');      // Fixes any literal newlines
-
-console.log(fullLog);
-
-function deepLog(data: any) {
-    const output = inspect(data, {
-        depth: null,
-        colors: true,
-        breakLength: 100, // Keeps long ANSI strings on one line if possible
-    });
-
-    // This regex handles both the standard \u001b and the 
-    // way inspect sometimes formats them as \x1B
-    console.log(output.replace(/\\u001b|\\x1b/gi, '\x1b'));
+interface RunContext {
+    test?: number | number[];
+    str?: any;
 }
 
-// Now you can just do:
-deepLog(Char.DEBUG_INFO);
+// Run the main function to start the tests.
+//runTest();
+
+async function run() {
+    const rl = readline.createInterface({ input, output });
+
+    try {
+        // 1. Gather input for 'str' (any type)
+        const strInput = await rl.question("Enter value for 'str': ");
+
+        // 2. Gather and parse input for 'test' (number or number[])
+        const testInput = await rl.question("Enter 'test' (single number or comma-separated list): ");
+
+        let testValue: number | number[] | undefined;
+
+        // Parsing logic: Check if input contains commas for an array
+        if (testInput.includes(',')) {
+            testValue = testInput.split(',')
+                .map(val => val.trim())
+                .filter(val => val !== "") // Remove empty strings
+                .map(Number); // Convert strings to numbers
+        } else if (testInput.trim() !== "") {
+            testValue = Number(testInput); // Single number conversion
+        }
+
+        // 3. Construct the RunContext object
+        const context: RunContext = {
+            test: testValue,
+            str: strInput
+        };
+
+        // 4. Execute your function
+        runTest(context);
+
+    } catch (error) {
+        console.error("An error occurred:", error);
+    } finally {
+        rl.close();
+    }
+}
+
+run();
+
 
 
 
