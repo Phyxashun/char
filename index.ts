@@ -21,6 +21,11 @@ enum Test {
 
 // Types
 
+interface RunContext {
+    test?: number | number[];
+    str?: any;
+}
+
 /**
  * The context object passed to each test function, containing the
  * string to be tested and an optional letter.
@@ -235,7 +240,7 @@ const testFunctions: Record<TestNumber, TestFunction> = {
  * A map of test definitions, where each key is a `TestNumber` and the value
  * is a `TestDefContext` object describing the test case.
  */
-const testDefinitions: Record<number, TestDefContext> = {
+const testScenarios: Record<number, TestDefContext> = {
     [1]: { str: 'A', tests: 1 },
     [2]: { str: '🪖', tests: [Test.one, Test.two] },
     [3]: { str: `Hello, World!\nThis is line 2.`, ltr: 'W', tests: [3, 4, 5] },
@@ -249,30 +254,41 @@ const testDefinitions: Record<number, TestDefContext> = {
  * It iterates through all defined tests and executes them.
  */
 const runTest = (ctx?: RunContext) => {
-    if (ctx !== undefined) {
-        const testsArray = Array.isArray(ctx) ? ctx : [ctx];
-        for (const test of testsArray) {
-            const testDefCtx = testDefinitions[test] as TestDefContext;
+    // Scenario 1: No context provided - Run all pre-defined scenarios
+    if (!ctx || (ctx.test === undefined && !ctx.str)) {
+        for (const testDefCtx of Object.values(testScenarios)) {
             util.runTest(testDefCtx);
         }
+        return;
     }
 
-    if (ctx === undefined) {
-        for (const testDefCtx of Object.values(testDefinitions)) {
-            util.runTest(testDefCtx);
+    // Scenario 2: Context provided
+    const { test, str } = ctx;
+
+    // Normalize test IDs into an array
+    const testIds = test === undefined ? [] : (Array.isArray(test) ? test : [test]);
+
+    if (str && testIds.length > 0) {
+        // Logic: Run specific test logic (Enum) on a custom string
+        util.runTest({
+            str: str,
+            tests: testIds as TestNumber[]
+        });
+    } else if (testIds.length > 0) {
+        // Logic: Run pre-defined scenarios by their ID (1-6)
+        for (const id of testIds) {
+            const scenario = testScenarios[id];
+            if (scenario) {
+                util.runTest(scenario);
+            } else {
+                console.warn(`Scenario ID ${id} not found in testScenarios.`);
+            }
         }
     }
 };
 
-interface RunContext {
-    test?: number | number[];
-    str?: any;
-}
-
 // Run the main function to start the tests.
-//runTest();
-
-async function run() {
+async function main() {
     const rl = readline.createInterface({ input, output });
 
     try {
@@ -310,4 +326,4 @@ async function run() {
     }
 }
 
-run();
+main();
