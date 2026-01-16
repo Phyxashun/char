@@ -1,321 +1,235 @@
 {
-  // ============================================================================
-  // WORKBENCH & UI
-  // ============================================================================
-  // Appearance and theme
-  "workbench.colorTheme": "Theme Darker",
-  "workbench.iconTheme": "vs-seti",
-  "workbench.productIconTheme": "Default",
-  // File explorer settings
-  "explorer.confirmDelete": false,
-  "explorer.confirmDragAndDrop": false,
-  // JSON validation
-  "json.validate.enable": false,
-  // ============================================================================
-  // GIT
-  // ============================================================================
-  // Git automation and workflow settings
-  "git.enableSmartCommit": true,
-  "git.autofetch": true,
-  "git.confirmSync": false,
-  "git.openRepositoryInParentFolders": "always",
-  // ============================================================================
-  // TERMINAL SETTINGS
-  // ============================================================================
-  // Terminal font and display settings
-  "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font'",
-  "terminal.integrated.fontSize": 13,
-  "terminal.integrated.lineHeight": 1.15,
-  // Terminal status bar integration
-  "terminal-in-status-bar.statusBarAlignment": "right",
-  "terminal-in-status-bar.statusBarPriority": 10000,
-  // ============================================================================
-  // EDITOR - GENERAL
-  // ============================================================================
-  // Font settings
-  "editor.fontFamily": "'JetBrainsMono Nerd Font'",
-  "editor.fontSize": 14,
-  "editor.lineHeight": 1.4,
-  "editor.fontLigatures": true,
-  // Editor behavior and display
-  "editor.smoothScrolling": true,
-  "editor.minimap.enabled": false,
-  //"editor.stickyScroll.enabled": true,
-  "editor.tabSize": 4,
-  "editor.indentSize": 4,
-  "editor.insertSpaces": true,
-  "editor.detectIndentation": false,
-  "editor.autoIndent": "full",
-  "editor.tabCompletion": "onlySnippets",
-  "editor.showDeprecated": true,
-  // Cursor settings
-  "editor.cursorStyle": "line",
-  "editor.cursorWidth": 2,
-  "editor.cursorBlinking": "expand",
-  "editor.cursorSmoothCaretAnimation": "on",
-  // Word wrapping configuration
-  "editor.wordWrap": "bounded",
-  "editor.wordWrapColumn": 140,
-  "editor.rulers": [140],
-  // Formatting settings
-  "editor.defaultFormatter": "prettier.prettier-vscode",
-  "editor.formatOnSave": true,
-  // ============================================================================
-  // EDITOR - SYNTAX HIGHLIGHTING & BRACKETS
-  // ============================================================================
-  // Semantic highlighting
-  //"editor.semanticHighlighting.enabled": true,
-  "editor.semanticTokenColorCustomizations": {
-    "enabled": true
-  },
-  // Bracket pair colorization and guides
-  "editor.bracketPairColorization.enabled": true,
-  //"editor.bracketPairColorization.independentColorPoolPerBracketType": true,
-  "editor.guides.bracketPairs": "active",
-  "editor.guides.highlightActiveBracketPair": true,
-  "editor.guides.indentation": true,
-  // File trimming settings
-  "files.trimTrailingWhitespaceInRegexAndStrings": false,
-  // ============================================================================
-  // TYPESCRIPT & JAVASCRIPT - GLOBAL SETTINGS
-  // ============================================================================
-  // TypeScript settings (formatting handled by Prettier)
-  "typescript.format.enable": false,
-  "typescript.format.semicolons": "insert",
-  "typescript.preferences.quoteStyle": "single",
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "typescript.suggest.paths": false,
-  // JavaScript settings (formatting handled by Prettier)
-  "javascript.format.enable": false,
-  "javascript.format.semicolons": "insert",
-  "javascript.preferences.quoteStyle": "single",
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "javascript.suggest.paths": false,
-  // Prettier configuration (commented - using .prettierrc instead)
-  //"prettier.semi": true,
-  //"prettier.singleQuote": true,
-  //"prettier.trailingComma": "all",
-  //"prettier.printWidth": 140,
-  //"prettier.bracketSpacing": true,
-  // ============================================================================
-  // LANGUAGE-SPECIFIC OVERRIDES
-  // ============================================================================
-  // TypeScript
-  "[typescript]": {
-    "files.autoSave": "onFocusChange",
-    "editor.defaultFormatter": "prettier.prettier-vscode",
-    "editor.wordWrap": "on"
-  },
-  // TypeScript React
-  "[typescriptreact]": {
-    "files.autoSave": "onFocusChange",
-    "editor.defaultFormatter": "prettier.prettier-vscode",
-    "editor.wordWrap": "on"
-  },
-  // JavaScript
-  "[javascript]": {
-    "files.autoSave": "onFocusChange",
-    "editor.defaultFormatter": "prettier.prettier-vscode",
-    "editor.wordWrap": "on"
-  },
-  // Markdown
-  "[markdown]": {
-    "files.autoSave": "onFocusChange",
-    "editor.defaultFormatter": "prettier.prettier-vscode",
-    "editor.wordWrap": "on"
-  },
-  // JSON
-  "[json]": {
-    "files.autoSave": "onFocusChange",
-    "editor.defaultFormatter": "prettier.prettier-vscode",
-    "editor.wordWrap": "on"
-  },
-  // JSON with Comments
-  "[jsonc]": {
-    "files.autoSave": "onFocusChange",
-    "editor.defaultFormatter": "prettier.prettier-vscode",
-    "editor.wordWrap": "on"
-  },
-  // ============================================================================
-  // LINTING & CODE QUALITY
-  // ============================================================================
-  // ESLint configuration
-  "eslint.enable": true,
-  "eslint.codeAction.showDocumentation": {
-    "enable": true
-  },
-  "eslint.codeAction.disableRuleComment": {
-    "enable": true,
-    "location": "sameLine"
-  },
-  // ============================================================================
-  // EXTENSIONS - TODO TREE
-  // ============================================================================
-  // Todo Tree configuration
-  "todo-tree.tree.showCountsInTree": true,
-  "todo-tree.general.statusBar": "top three",
-  "todo-tree.general.showIconsInsteadOfTagsInStatusBar": true,
-  // Todo tags and grouping
-  "todo-tree.general.tags": ["TODO", "FIXME", "FIXIT", "FIX", "BUG"],
-  "todo-tree.general.tagGroups": {
-    "FIXME": ["FIXME", "FIXIT", "FIX", "BUG"]
-  },
-  // Custom highlighting for todo tags
-  "todo-tree.highlights.customHighlight": {
-    "TODO": {
-      "gutterIcon": true,
-      "icon": "tasklist",
-      "iconColour": "#FF8C00",
-      "type": "tag",
-      "background": "#CF7200",
-      "foreground": "#FFFFFF",
-      "fontWeight": "bold"
+    // prettier-ignore
+
+    // ============================================================================
+    // WORKBENCH & UI
+    // ============================================================================
+    "workbench.colorTheme": "Theme Darker",
+    "workbench.iconTheme": "vs-seti",
+    "workbench.productIconTheme": "Default",
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    "json.validate.enable": false,
+
+    // ============================================================================
+    // TERMINAL SETTINGS
+    // ============================================================================
+    "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font'",
+    "terminal.integrated.fontSize": 13,
+    "terminal.integrated.lineHeight": 1.15,
+
+    // ============================================================================
+    // EDITOR - GENERAL
+    // ============================================================================
+    "editor.fontFamily": "'JetBrainsMono Nerd Font'",
+    "editor.fontSize": 14,
+    "editor.lineHeight": 1.4,
+    "editor.fontLigatures": true,
+    "editor.smoothScrolling": true,
+    "editor.minimap.enabled": false,
+    "editor.stickyScroll.enabled": true,
+    "editor.tabSize": 4,
+    "editor.indentSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.autoIndent": "full",
+    "editor.tabCompletion": "onlySnippets",
+    "editor.showDeprecated": true,
+
+    // ============================================================================
+    // EDITOR - CURSOR SETTINGS
+    // ============================================================================
+    "editor.cursorStyle": "line",
+    "editor.cursorWidth": 2,
+    "editor.cursorBlinking": "expand",
+    "editor.cursorSmoothCaretAnimation": "on",
+
+    // ============================================================================
+    // EDITOR - MISC
+    // ============================================================================
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 140,
+    "editor.rulers": [140],
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": true,
+    "files.autoSave": "afterDelay",
+    "files.insertFinalNewline": true,
+
+    // ============================================================================
+    // EDITOR - SYNTAX HIGHLIGHTING & BRACKETS
+    // ============================================================================
+    "editor.semanticHighlighting.enabled": true,
+    "editor.semanticTokenColorCustomizations": {
+        "enabled": true
     },
-    "FIXME": {
-      "gutterIcon": true,
-      "icon": "tools",
-      "iconColour": "#00FF00",
-      "type": "tag",
-      "background": "#008000",
-      "foreground": "#FFFF00",
-      "fontWeight": "bold"
-    }
-  },
-  // ============================================================================
-  // EXTENSIONS - BETTER COMMENTS
-  // ============================================================================
-  "better-comments.multilineComments": true,
-  "better-comments.tags": [
-    {
-      "tag": "!",
-      "color": "#FF2D00",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": true,
-      "italic": false
+    "editor.bracketPairColorization.enabled": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "editor.guides.bracketPairs": "active",
+    "editor.guides.highlightActiveBracketPair": true,
+    "editor.guides.indentation": true,
+    "files.trimTrailingWhitespaceInRegexAndStrings": false,
+
+    // ============================================================================
+    // TYPESCRIPT & JAVASCRIPT - GLOBAL SETTINGS
+    // ============================================================================
+    "prettier.configPath": "./prettier.config.ts",
+    "typescript.format.enable": false,
+    "typescript.format.semicolons": "insert",
+    "typescript.preferences.quoteStyle": "single",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "javascript.format.enable": false,
+    "javascript.format.semicolons": "insert",
+    "javascript.preferences.quoteStyle": "single",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "javascript.suggest.paths": false,
+
+    // ============================================================================
+    // LANGUAGE-SPECIFIC OVERRIDES
+    // ============================================================================
+    "[typescript]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on"
     },
-    {
-      "tag": "?",
-      "color": "#3498DB",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": false,
-      "italic": false
+    "[typescriptreact]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on"
     },
-    {
-      "tag": "//",
-      "color": "#474747",
-      "strikethrough": true,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": false,
-      "italic": false
+    "[javascript]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on"
     },
-    {
-      "tag": "todo",
-      "color": "#FF8C00",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": false,
-      "italic": false
+    "[markdown]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on"
     },
-    {
-      "tag": "fixme",
-      "color": "#008000",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": false,
-      "italic": false
+    "[json]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on"
     },
-    {
-      "tag": "fixit",
-      "color": "#008000",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": false,
-      "italic": false
+    "[jsonc]": {
+        "files.autoSave": "onFocusChange",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.wordWrap": "on"
     },
-    {
-      "tag": "fix",
-      "color": "#008000",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": false,
-      "italic": false
-    },
-    {
-      "tag": "bug",
-      "color": "#008000",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": false,
-      "italic": false
-    },
-    {
-      "tag": "*",
-      "color": "#98C379",
-      "strikethrough": false,
-      "underline": false,
-      "backgroundColor": "transparent",
-      "bold": true,
-      "italic": false
-    }
-  ],
-  // ============================================================================
-  // EXTENSIONS - INDENT RAINBOW
-  // ============================================================================
-  // Visual indent guides with color coding
-  "indentRainbow.indicatorStyle": "classic",
-  "indentRainbow.lightIndicatorStyleLineWidth": 1,
-  "indentRainbow.colorOnWhiteSpaceOnly": true,
-  "indentRainbow.updateDelay": 100,
-  "indentRainbow.ignoreErrorLanguages": ["haskell"],
-  // Error highlighting for inconsistent indentation
-  "indentRainbow.errorColor": "rgba(128,32,32,0.6)",
-  "indentRainbow.tabmixColor": "rgba(128,32,96,0.6)",
-  // Rainbow colors for different indent levels
-  "indentRainbow.colors": [
-    "rgba(255,255,64,0.07)",
-    "rgba(127,255,127,0.07)",
-    "rgba(255,127,255,0.07)",
-    "rgba(79,236,236,0.07)"
-  ],
-  // ============================================================================
-  // EXTENSIONS - BOOKMARKS
-  // ============================================================================
-  "bookmarks.saveBookmarksInProject": false,
-  "bookmarks.showCommandsInContextMenu": true,
-  // ============================================================================
-  // FORMATTING TOGGLE
-  // ============================================================================
-  // Settings affected by formatting toggle
-  "formattingToggle.affects": [
-    "editor.formatOnPaste",
-    "editor.formatOnSave",
-    "editor.formatOnType",
-    "editor.codeActionsOnSave.source.fixAll.eslint"
-  ],
-  // Status bar text for formatting toggle
-  "formattingToggle.statusBarText": {
-    "formattingEnabled": "$(heart-filled) Formatting On",
-    "formattingDisabled": "$(heart) Formatting Off"
-  },
-  // ============================================================================
-  // BUN RUNTIME
-  // ============================================================================
-  // Path to Bun executable
-  "bun.runtime": "~/.local/share/nvm/v25.2.1/bin/bun",
-  // Debug terminal configuration
-  "bun.debugTerminal.enabled": true,
-  "bun.debugTerminal.stopOnEntry": false,
-  // Test file pattern matching
-  "bun.test.filePattern": "**/*{.test.,.spec.,_test_,_spec_}{js,ts,tsx,jsx,mts,cts,cjs,mjs}",
-  "bun.test.customScript": "bun test"
+
+    // ============================================================================
+    // EXTENSIONS - BETTER COMMENTS
+    // ============================================================================
+    "better-comments.multilineComments": true,
+    "better-comments.tags": [
+        {
+            "tag": "!",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "?",
+            "color": "#3498DB",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "//",
+            "color": "#474747",
+            "strikethrough": true,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "todo",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "fixme",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "fixit",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "fix",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "bug",
+            "color": "#008000",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "*",
+            "color": "#98C379",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        }
+    ],
+
+    // ============================================================================
+    // EXTENSIONS - INDENT RAINBOW
+    // ============================================================================
+    "indentRainbow.indicatorStyle": "classic",
+    "indentRainbow.lightIndicatorStyleLineWidth": 1,
+    "indentRainbow.colorOnWhiteSpaceOnly": true,
+    "indentRainbow.updateDelay": 100,
+    "indentRainbow.ignoreErrorLanguages": ["haskell"],
+    "indentRainbow.errorColor": "rgba(128,32,32,0.6)",
+    "indentRainbow.tabmixColor": "rgba(128,32,96,0.6)",
+    "indentRainbow.colors": ["rgba(255,255,64,0.07)", "rgba(127,255,127,0.07)", "rgba(255,127,255,0.07)", "rgba(79,236,236,0.07)"],
+
+    // ============================================================================
+    // EXTENSIONS - BOOKMARKS
+    // ============================================================================
+    "bookmarks.saveBookmarksInProject": false,
+    "bookmarks.showCommandsInContextMenu": true,
+
+    // ============================================================================
+    // BUN RUNTIME
+    // ============================================================================
+    "bun.runtime": "~/.local/share/nvm/v25.2.1/bin/bun",
+    "bun.debugTerminal.enabled": true,
+    "bun.debugTerminal.stopOnEntry": false,
+    "bun.test.filePattern": "**/*{.test.,.spec.,_test_,_spec_}{js,ts,tsx,jsx,mts,cts,cjs,mjs}",
+    "bun.test.customScript": "bun test"
 }

@@ -9,7 +9,7 @@ const SINGLE_WIDTH = 1;
 const DOUBLE_WIDTH = 2;
 
 describe('Char.calculateVisualWidth', () => {
-    const testCases: { description: string, char: string, expected: number; }[] = [
+    const testCases: { description: string; char: string; expected: number }[] = [
         // 1. Basic Single-Width Characters
         { description: 'should return 1 for a standard letter', char: 'A', expected: SINGLE_WIDTH },
         { description: 'should return 1 for a standard number', char: '1', expected: SINGLE_WIDTH },
@@ -66,4 +66,3 @@ describe('Char.calculateVisualWidth', () => {
         expect(Char.calculateVisualWidth('')).toBe(0);
     });
 });
-

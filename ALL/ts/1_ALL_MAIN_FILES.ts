@@ -13,41 +13,41 @@ import { CharSpec } from './CharSpec.ts';
 
 /*
 interface InspectOptions {
-    // The length at which input values are split across multiple lines. Set to Infinity to format the input as a single line (in combination with compact set to true or any number >= 1).
-    breakLength?: number;
+	// The length at which input values are split across multiple lines. Set to Infinity to format the input as a single line (in combination with compact set to true or any number >= 1).
+	breakLength?: number;
 
-    // If true, the output is styled with ANSI color codes. Colors are customizable.
-    colors?: boolean;
+	// If true, the output is styled with ANSI color codes. Colors are customizable.
+	colors?: boolean;
 
-    // Setting this to false causes each object key to be displayed on a new line. It will also add new lines to text that is longer than breakLength. If set to a number, the most n inner elements are united on a single line as long as all properties fit into breakLength. Short array elements are also grouped together. Note that no text will be reduced below 16 characters, no matter the breakLength size. For more information, see the example below.
-    compact?: number | boolean;
+	// Setting this to false causes each object key to be displayed on a new line. It will also add new lines to text that is longer than breakLength. If set to a number, the most n inner elements are united on a single line as long as all properties fit into breakLength. Short array elements are also grouped together. Note that no text will be reduced below 16 characters, no matter the breakLength size. For more information, see the example below.
+	compact?: number | boolean;
 
-    // If false, [util.inspect.custom](depth, opts, inspect) functions are not invoked.
-    customInspect?: boolean;
+	// If false, [util.inspect.custom](depth, opts, inspect) functions are not invoked.
+	customInspect?: boolean;
     
-    // Specifies the number of times to recurse while formatting object. This is useful for inspecting large objects. To recurse up to the maximum call stack size pass Infinity or null.
-    depth?: null | number;
+	// Specifies the number of times to recurse while formatting object. This is useful for inspecting large objects. To recurse up to the maximum call stack size pass Infinity or null.
+	depth?: null | number;
     
-    // If set to true, getters are going to be inspected as well. If set to 'get' only getters without setter are going to be inspected. If set to 'set' only getters having a corresponding setter are going to be inspected. This might cause side effects depending on the getter function.
-    getters?: boolean | 'get' | 'set';
+	// If set to true, getters are going to be inspected as well. If set to 'get' only getters without setter are going to be inspected. If set to 'set' only getters having a corresponding setter are going to be inspected. This might cause side effects depending on the getter function.
+	getters?: boolean | 'get' | 'set';
     
-    // Specifies the maximum number of Array, TypedArray, WeakMap, and WeakSet elements to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no elements.
-    maxArrayLength?: null | number;
+	// Specifies the maximum number of Array, TypedArray, WeakMap, and WeakSet elements to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no elements.
+	maxArrayLength?: null | number;
     
-    // Specifies the maximum number of characters to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no characters.
-    maxStringLength?: null | number;
+	// Specifies the maximum number of characters to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no characters.
+	maxStringLength?: null | number;
     
-    // If set to true, an underscore is used to separate every three digits in all bigints and numbers.
-    numericSeparator?: boolean;
+	// If set to true, an underscore is used to separate every three digits in all bigints and numbers.
+	numericSeparator?: boolean;
     
-    // If true, object's non-enumerable symbols and properties are included in the formatted result. WeakMap and WeakSet entries are also included as well as user defined prototype properties (excluding method properties).
-    showHidden?: boolean;
+	// If true, object's non-enumerable symbols and properties are included in the formatted result. WeakMap and WeakSet entries are also included as well as user defined prototype properties (excluding method properties).
+	showHidden?: boolean;
     
-    // If true, Proxy inspection includes the target and handler objects.
-    showProxy?: boolean;
+	// If true, Proxy inspection includes the target and handler objects.
+	showProxy?: boolean;
     
-    // If set to true or a function, all properties of an object, and Set and Map entries are sorted in the resulting string. If set to true the default sort is used. If set to a function, it is used as a compare function.
-    sorted?: boolean | ((a: string, b: string) => number);
+	// If set to true or a function, all properties of an object, and Set and Map entries are sorted in the resulting string. If set to true the default sort is used. If set to a function, it is used as a compare function.
+	sorted?: boolean | ((a: string, b: string) => number);
 }//*/
 
 /**
@@ -66,16 +66,36 @@ const COMMON_ESCAPES: Record<string, string> = {
     '\v': '\\v',
     '\f': '\\f',
     '\0': '\\0',
-    '\\': '\\\\'
+    '\\': '\\\\',
 } as const;
 const NUMERAL_MAP: Record<string, number> = {
-    'Ⅰ': 1, 'Ⅱ': 2, 'Ⅲ': 3, 'Ⅳ': 4, 'Ⅴ': 5,
-    'Ⅵ': 6, 'Ⅶ': 7, 'Ⅷ': 8, 'Ⅸ': 9, 'Ⅹ': 10,
-    'Ⅺ': 11, 'Ⅻ': 12, 'Ⅼ': 50, 'Ⅽ': 100, 'Ⅾ': 500,
-    'Ⅿ': 1000,
+    Ⅰ: 1,
+    Ⅱ: 2,
+    Ⅲ: 3,
+    Ⅳ: 4,
+    Ⅴ: 5,
+    Ⅵ: 6,
+    Ⅶ: 7,
+    Ⅷ: 8,
+    Ⅸ: 9,
+    Ⅹ: 10,
+    Ⅺ: 11,
+    Ⅻ: 12,
+    Ⅼ: 50,
+    Ⅽ: 100,
+    Ⅾ: 500,
+    Ⅿ: 1000,
     // Add other numeral systems here
-    '①': 1, '②': 2, '③': 3, '④': 4, '⑤': 5,
-    '⑥': 6, '⑦': 7, '⑧': 8, '⑨': 9, '⑩': 10,
+    '①': 1,
+    '②': 2,
+    '③': 3,
+    '④': 4,
+    '⑤': 5,
+    '⑥': 6,
+    '⑦': 7,
+    '⑧': 8,
+    '⑨': 9,
+    '⑩': 10,
 } as const;
 
 /**
@@ -90,7 +110,7 @@ export class Position {
         public index: number = IS_UNDEFINED,
         public line: number = IS_UNDEFINED,
         public column: number = IS_UNDEFINED,
-    ) { }
+    ) {}
 }
 
 export class IChar {
@@ -119,7 +139,7 @@ export class IChar {
     }
 
     public get value(): string {
-        // Convert code points to strings one-by-one to avoid 
+        // Convert code points to strings one-by-one to avoid
         // stack overflow limits caused by the spread operator (...)
         return Array.from(this._value)
             .map(codePoint => String.fromCodePoint(codePoint))
@@ -131,8 +151,8 @@ export class IChar {
         const codePoints = Array.from(character).map(c => c.codePointAt(0)!);
 
         // Validate that nothing stored is outside the valid Unicode range
-        if (codePoints.some(cp => cp > 0x10FFFF)) {
-            throw new Error("Invalid Unicode code point detected.");
+        if (codePoints.some(cp => cp > 0x10ffff)) {
+            throw new Error('Invalid Unicode code point detected.');
         }
 
         this._value = new Uint32Array(codePoints);
@@ -161,14 +181,14 @@ export class Char extends IChar {
         options: {
             isSubstring?: boolean;
             position?: Position;
-        } = {}
+        } = {},
     ) {
         // Unicode-safe validation using Intl.Segmenter
         const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
         const segments = Array.from(segmenter.segment(character));
 
         if (segments.length !== 1) {
-            throw new Error("Input must be a single visual character (grapheme).");
+            throw new Error('Input must be a single visual character (grapheme).');
         }
 
         const isSubstring = options.isSubstring ?? false;
@@ -252,7 +272,8 @@ export class Char extends IChar {
         const CHAR = stylize(charPadded, 'date');
 
         // Handle the position info if it exists.
-        let IDX = '', POS = '';
+        let IDX = '',
+            POS = '';
         if (this.isSubstring) {
             // Stylize the index, line and column numbers.
             const idxPadStart = `${this.position.index}`.padStart(2, ' ');
@@ -352,7 +373,7 @@ export class Char extends IChar {
         // Basic check for standard digits 0-9
         if (digits) return parseInt(digits, 10);
 
-        // For other Unicode numbers, you might return the code point 
+        // For other Unicode numbers, you might return the code point
         // or use a library to get the actual decimal value
         return IS_UNDEFINED;
     }
@@ -387,10 +408,12 @@ export class Char extends IChar {
         for (const { segment, index } of segments) {
             const position = Char.calculatePosition(str, index);
 
-            chars.push(new Char(segment, {
-                isSubstring: true,
-                position: position
-            }));
+            chars.push(
+                new Char(segment, {
+                    isSubstring: true,
+                    position: position,
+                }),
+            );
         }
 
         // 3. Final Step: Assign the computed maxWidth to every character object
@@ -464,43 +487,43 @@ export class Char extends IChar {
     }
 
     public static isMultiCharacter(str: string): boolean {
-        return str === '\\n' ||
-            str === '\\t' ||
-            str === '\\r' ||
-            str === '\\v' ||
-            str === '\\f';
+        return str === '\\n' || str === '\\t' || str === '\\r' || str === '\\v' || str === '\\f';
     }
 
     public static isZeroWidth(code: number): boolean {
-        return (code <= 0x1F) ||                    // C0 controls
-            (code >= 0x7F && code <= 0x9F) ||       // C1 controls
-            (code >= 0x300 && code <= 0x36F) ||     // Combining Diacritical Marks
-            (code >= 0x200B && code <= 0x200F) ||   // Zero-width spaces
-            (code >= 0xFE00 && code <= 0xFE0F) ||   // Variation Selectors block
-            (code >= 0xFEFF && code <= 0xFEFF);     // Zero-width no-break space
+        return (
+            code <= 0x1f || // C0 controls
+            (code >= 0x7f && code <= 0x9f) || // C1 controls
+            (code >= 0x300 && code <= 0x36f) || // Combining Diacritical Marks
+            (code >= 0x200b && code <= 0x200f) || // Zero-width spaces
+            (code >= 0xfe00 && code <= 0xfe0f) || // Variation Selectors block
+            (code >= 0xfeff && code <= 0xfeff)
+        ); // Zero-width no-break space
     }
 
     public static isDoubleWidth(code: number): boolean {
         // This list is a heuristic. The Emoji_Presentation check in calculateVisualWidth is more robust for emojis.
         // This is primarily for full-width forms and CJK characters.
-        return (code >= 0x1100 && code <= 0x115F) ||    // Hangul Jamo
-            (code >= 0x2329 && code <= 0x232A) ||       // Left/Right Angle Bracket
-            (code >= 0x3040 && code <= 0x309F) ||       // Hiragana
-            (code >= 0x30A0 && code <= 0x30FF) ||       // Katakana
-            (code >= 0x4E00 && code <= 0x9FFF) ||       // CJK Unified Ideographs
-            (code >= 0xAC00 && code <= 0xD7A3) ||       // Hangul Syllables
-            (code >= 0xF900 && code <= 0xFAFF) ||       // CJK Compatibility Ideographs
-            (code >= 0xFE10 && code <= 0xFE19) ||       // Vertical Forms
-            (code >= 0xFE30 && code <= 0xFE6F) ||       // CJK Compatibility Forms
-            (code >= 0xFF00 && code <= 0xFFEF) ||       // Halfwidth and Fullwidth Forms
-            (code >= 0x1F300);                          // Most modern Emoji and Symbols
+        return (
+            (code >= 0x1100 && code <= 0x115f) || // Hangul Jamo
+            (code >= 0x2329 && code <= 0x232a) || // Left/Right Angle Bracket
+            (code >= 0x3040 && code <= 0x309f) || // Hiragana
+            (code >= 0x30a0 && code <= 0x30ff) || // Katakana
+            (code >= 0x4e00 && code <= 0x9fff) || // CJK Unified Ideographs
+            (code >= 0xac00 && code <= 0xd7a3) || // Hangul Syllables
+            (code >= 0xf900 && code <= 0xfaff) || // CJK Compatibility Ideographs
+            (code >= 0xfe10 && code <= 0xfe19) || // Vertical Forms
+            (code >= 0xfe30 && code <= 0xfe6f) || // CJK Compatibility Forms
+            (code >= 0xff00 && code <= 0xffef) || // Halfwidth and Fullwidth Forms
+            code >= 0x1f300
+        ); // Most modern Emoji and Symbols
     }
 
     /**
      * @method getType
      * @description
-     * @param char 
-     * @returns 
+     * @param char
+     * @returns
      */
     public static getType = (char: string): CharType => {
         if (char === undefined) return CharType.Undefined;
@@ -612,7 +635,7 @@ export enum CharType {
     // International / Multi-byte
     Emoji = 'Emoji',
     Unicode = 'Unicode',
-};
+}
 
 
 
@@ -632,59 +655,59 @@ export enum CharType {
 
 // ./src/CharSpec.ts
 
-import { CharType } from "./CharType.ts";
+import { CharType } from './CharType.ts';
 
 type CharSpecFn = (char: string) => boolean;
 
 export const CharSpec: Map<CharType, CharSpecFn> = new Map([
-  [CharType.EOF, (char: string) => char === ""],
-  //[CharType.NewLine, (char: string) => /[\n\r]/.test(char)],
-  [CharType.NewLine, (char: string) => /[\n\r\u2028\u2029]/u.test(char)],
-  [CharType.Whitespace, (char: string) => /[ \t\f\v]/.test(char)],
+    [CharType.EOF, (char: string) => char === ''],
+    //[CharType.NewLine, (char: string) => /[\n\r]/.test(char)],
+    [CharType.NewLine, (char: string) => /[\n\r\u2028\u2029]/u.test(char)],
+    [CharType.Whitespace, (char: string) => /[ \t\f\v]/.test(char)],
 
-  [CharType.Letter, (char: string) => /\p{L}/v.test(char)],
-  [CharType.Number, (char: string) => /\p{N}/v.test(char)],
-  [CharType.Emoji, (char: string) => /\p{Emoji}/v.test(char)],
-  [CharType.Currency, (char: string) => /\p{Sc}/v.test(char)],
+    [CharType.Letter, (char: string) => /\p{L}/v.test(char)],
+    [CharType.Number, (char: string) => /\p{N}/v.test(char)],
+    [CharType.Emoji, (char: string) => /\p{Emoji}/v.test(char)],
+    [CharType.Currency, (char: string) => /\p{Sc}/v.test(char)],
 
-  [CharType.Hash, (char: string) => char === "#"],
-  [CharType.Percent, (char: string) => char === "%"],
-  [CharType.Slash, (char: string) => char === "/"],
-  [CharType.Comma, (char: string) => char === ","],
-  [CharType.LParen, (char: string) => char === "("],
-  [CharType.RParen, (char: string) => char === ")"],
-  [CharType.Plus, (char: string) => char === "+"],
-  [CharType.Minus, (char: string) => char === "-"],
-  [CharType.Star, (char: string) => char === "*"],
-  [CharType.Dot, (char: string) => char === "."],
-  [CharType.Backtick, (char: string) => char === "`"],
-  [CharType.SingleQuote, (char: string) => char === "'"],
-  [CharType.DoubleQuote, (char: string) => char === '"'],
-  [CharType.BackSlash, (char: string) => char === "\\"],
-  [CharType.Tilde, (char: string) => char === "~"],
-  [CharType.Exclamation, (char: string) => char === "!"],
-  [CharType.At, (char: string) => char === "@"],
-  [CharType.Dollar, (char: string) => char === "$"],
-  [CharType.Question, (char: string) => char === "?"],
-  [CharType.Caret, (char: string) => char === "^"],
-  [CharType.Ampersand, (char: string) => char === "&"],
-  [CharType.LessThan, (char: string) => char === "<"],
-  [CharType.GreaterThan, (char: string) => char === ">"],
-  [CharType.Underscore, (char: string) => char === "_"],
-  [CharType.EqualSign, (char: string) => char === "="],
-  [CharType.LBracket, (char: string) => char === "["],
-  [CharType.RBracket, (char: string) => char === "]"],
-  [CharType.LBrace, (char: string) => char === "{"],
-  [CharType.RBrace, (char: string) => char === "}"],
-  [CharType.SemiColon, (char: string) => char === ";"],
-  [CharType.Colon, (char: string) => char === ":"],
-  [CharType.Pipe, (char: string) => char === "|"],
+    [CharType.Hash, (char: string) => char === '#'],
+    [CharType.Percent, (char: string) => char === '%'],
+    [CharType.Slash, (char: string) => char === '/'],
+    [CharType.Comma, (char: string) => char === ','],
+    [CharType.LParen, (char: string) => char === '('],
+    [CharType.RParen, (char: string) => char === ')'],
+    [CharType.Plus, (char: string) => char === '+'],
+    [CharType.Minus, (char: string) => char === '-'],
+    [CharType.Star, (char: string) => char === '*'],
+    [CharType.Dot, (char: string) => char === '.'],
+    [CharType.Backtick, (char: string) => char === '`'],
+    [CharType.SingleQuote, (char: string) => char === "'"],
+    [CharType.DoubleQuote, (char: string) => char === '"'],
+    [CharType.BackSlash, (char: string) => char === '\\'],
+    [CharType.Tilde, (char: string) => char === '~'],
+    [CharType.Exclamation, (char: string) => char === '!'],
+    [CharType.At, (char: string) => char === '@'],
+    [CharType.Dollar, (char: string) => char === '$'],
+    [CharType.Question, (char: string) => char === '?'],
+    [CharType.Caret, (char: string) => char === '^'],
+    [CharType.Ampersand, (char: string) => char === '&'],
+    [CharType.LessThan, (char: string) => char === '<'],
+    [CharType.GreaterThan, (char: string) => char === '>'],
+    [CharType.Underscore, (char: string) => char === '_'],
+    [CharType.EqualSign, (char: string) => char === '='],
+    [CharType.LBracket, (char: string) => char === '['],
+    [CharType.RBracket, (char: string) => char === ']'],
+    [CharType.LBrace, (char: string) => char === '{'],
+    [CharType.RBrace, (char: string) => char === '}'],
+    [CharType.SemiColon, (char: string) => char === ';'],
+    [CharType.Colon, (char: string) => char === ':'],
+    [CharType.Pipe, (char: string) => char === '|'],
 
-  [CharType.Punctuation, (char: string) => /\p{P}/v.test(char)],
+    [CharType.Punctuation, (char: string) => /\p{P}/v.test(char)],
 
-  [CharType.Symbol, (char: string) => /\p{S}/v.test(char)],
+    [CharType.Symbol, (char: string) => /\p{S}/v.test(char)],
 
-  [CharType.Unicode, (char: string) => /\P{ASCII}/v.test(char)],
+    [CharType.Unicode, (char: string) => /\P{ASCII}/v.test(char)],
 ]);
 
 
@@ -725,10 +748,11 @@ enum Test {
 }
 
 // Types
-
 interface RunContext {
-    test?: number | number[];
-    str?: any;
+    msg?: string;
+    str?: string;
+    ltr?: string;
+    tests?: number[];
 }
 
 /**
@@ -738,6 +762,7 @@ interface RunContext {
  * @property ltr An optional secondary character or string for tests that require it (e.g., searching).
  */
 interface TestContext {
+    msg: string;
     str: string;
     ltr?: string;
 }
@@ -747,23 +772,21 @@ interface TestContext {
  * It specifies the input strings and which test(s) to run.
  * @property str The primary string input for the test.
  * @property ltr An optional secondary character or string.
- * @property tests A single TestNumber or an array of TestNumbers to execute.
+ * @property tests A single TestDefNumber or an array of TestDefNumbers to execute.
  */
-interface TestDefContext {
+interface TestSchemasContext {
+    msg: string;
     str: string;
     ltr?: string;
-    tests: TestNumber | TestNumber[];
+    tests: number | number[];
 }
 
-/** 
- * A union type representing the valid numbers for a test case. 
+/**
+ * A function that executes a specific test scenario.
  */
-type TestNumber = 1 | 2 | 3 | 4 | 5;
+type TestDefinition = (ctx: TestContext) => void;
 
-/** 
- * A function that executes a specific test scenario. 
- */
-type TestFunction = (ctx: TestContext) => void;
+type ParseTestSchemaNumberOutput = number[] | undefined;
 
 //Utility Functions
 
@@ -813,27 +836,29 @@ const util = {
         console.log(output.replace(/\\u001b|\\x1b/gi, '\x1b'));
     },
     /** Executes a set of tests based on a test definition context. */
-    runTest: (testDefCtx: TestDefContext): void => {
-        const { str, ltr, tests } = testDefCtx;
-        // Normalize `tests` to always be an array for consistent processing.
-        const testsArray = Array.isArray(tests) ? tests : [tests];
-        const testCtx: TestContext = { str, ltr };
-
-        testsArray.forEach((testNum: TestNumber) => testFunctions[testNum](testCtx));
+    execute: (testSchCtx: TestSchemasContext): void => {
+        const { msg, str, ltr, tests }: TestSchemasContext = testSchCtx;
+        const testCtx: TestContext = { msg, str, ltr };
+        if (Array.isArray(tests)) {
+            tests.forEach(num => Tests[num]!(testCtx));
+        } else {
+            Tests[tests]!(testCtx);
+        }
     },
 };
 
 /**
- * A map of test implementations, where each key is a `TestNumber`
+ * A map of test implementations, where each key is a `TestDefNumber`
  * and the value is the corresponding test function.
  */
-const testFunctions: Record<TestNumber, TestFunction> = {
+const Tests: Record<number, TestDefinition> = {
     /**
      * Test 1: Creates a Char from a single character and outputs its raw,
      * character, and stored value representations.
      */
-    [Test.one]: ({ str }: TestContext): void => {
-        if (str.length === 0) return;
+    [Test.one]: ({ msg, str }: TestContext): void => {
+        if (str.length === 0 || str.length > 1) return;
+        console.log(`\n--- Running ${msg}-1 ---`);
         const char = new Char(str);
         util.insertTitle('CHARACTER TEST:');
         const raw = `${str}`;
@@ -843,15 +868,15 @@ const testFunctions: Record<TestNumber, TestFunction> = {
         const numAsStr = `${char.getValue()}`;
         console.log(`char:\tStored Value:\t${util.style(numAsStr)}`);
         util.insertReturn();
-
     },
 
     /**
      * Test 2: Creates a Char and displays its numeric value,
      * which is useful for non-digit characters.
      */
-    [Test.two]: ({ str }: TestContext): void => {
-        if (str.length === 0) return;
+    [Test.two]: ({ msg, str }: TestContext): void => {
+        if (str.length === 0 || str.length > 1) return;
+        console.log(`\n--- Running ${msg}-2 ---`);
         const char = new Char(str);
         util.insertTitle('NON-DIGIT CHARACTER TEST:');
         const raw = `${str}`;
@@ -869,9 +894,11 @@ const testFunctions: Record<TestNumber, TestFunction> = {
      * Test 3: Finds a specific character within a string and displays its
      * properties, such as value, case, and position.
      */
-    [Test.three]: ({ str, ltr }: TestContext): void => {
+    [Test.three]: ({ msg, str, ltr }: TestContext): void => {
         if (!ltr) return;
+        console.log(`\n--- Running ${msg}-3 ---`);
         const chars = Char.fromString(str);
+
         // Normalize both strings to a standard form (e.g., 'NFC' is common)
 
         // Ensure 'ltr' is a single grapheme cluster if intended
@@ -899,8 +926,9 @@ const testFunctions: Record<TestNumber, TestFunction> = {
      * Test 4: Iterates over a string to find and report the
      * position of whitespace and newline characters.
      */
-    [Test.four]: ({ str }: TestContext): void => {
+    [Test.four]: ({ msg, str }: TestContext): void => {
         const chars = Char.fromString(str);
+        console.log(`\n--- Running ${msg}-4 ---`);
         util.insertTitle('ITERATE TEST:');
 
         chars.forEach(ch => {
@@ -931,106 +959,153 @@ const testFunctions: Record<TestNumber, TestFunction> = {
      * Test 5: Demonstrates iterating over the `Char[]` array using a
      * for...of loop and inspecting each character.
      */
-    [Test.five]: ({ str }: TestContext): void => {
+    [Test.five]: ({ msg, str }: TestContext): void => {
+        console.log(`\n--- Running ${msg}-5 ---`);
         const chars = Char.fromString(str);
         util.insertTitle('FOR OF TEST:');
         for (const ch of chars) {
             console.log(util.inspect(ch));
         }
-        util.insertReturn();;
+        util.insertReturn();
     },
 };
 
 /**
- * A map of test definitions, where each key is a `TestNumber` and the value
- * is a `TestDefContext` object describing the test case.
+ * A map of test definitions, where each key is a `TestDefNumber` and the value
+ * is a `TestSchemasContext` object describing the test case.
  */
-const testScenarios: Record<number, TestDefContext> = {
-    [1]: { str: 'A', tests: 1 },
-    [2]: { str: '🪖', tests: [Test.one, Test.two] },
-    [3]: { str: `Hello, World!\nThis is line 2.`, ltr: 'W', tests: [3, 4, 5] },
-    [4]: { str: `🪖⚔️🎖️🪖🎖️💪`, ltr: '⚔️', tests: Test.five },
-    [5]: { str: '', ltr: '', tests: 1 },
-    [6]: { str: 'rgba(100, 250, 255, 0.5)', tests: 5 },
+const TestSchemas: Record<number, TestSchemasContext> = {
+    [1]: { msg: 'Test A', str: 'A', tests: [1, 2] },
+    [2]: { msg: 'Test B', str: '🪖', tests: [1, 2] },
+    [3]: { msg: 'Test C', str: `Hello, World!\nThis is line 2.`, ltr: 'W', tests: [3, 4, 5] },
+    [4]: { msg: 'Test D', str: `🪖⚔️🎖️🪖🎖️💪`, ltr: '⚔️', tests: [3, 4, 5] },
+    [5]: { msg: 'Test E', str: 'rgba(100, 250, 255, 0.5)', tests: [4, 5] },
 };
 
 /**
- * The main entry point for the script.
- * It iterates through all defined tests and executes them.
+ * The main test dispatcher.
+ * If called with no context, it runs all predefined tests.
+ * If called with user input, it finds the corresponding test definition and runs it.
  */
-const runTest = (ctx?: RunContext) => {
-    // Scenario 1: No context provided - Run all pre-defined scenarios
-    if (!ctx || (ctx.test === undefined && !ctx.str)) {
-        for (const testDefCtx of Object.values(testScenarios)) {
-            util.runTest(testDefCtx);
+const run = (ctx: RunContext) => {
+    const { str, ltr, tests } = ctx;
+    if (!str && !ltr && !tests) {
+        for (const testSchema of Object.values(TestSchemas)) {
+            util.execute(testSchema);
         }
         return;
     }
 
-    // Scenario 2: Context provided
-    const { test, str } = ctx;
-
-    // Normalize test IDs into an array
-    const testIds = test === undefined ? [] : (Array.isArray(test) ? test : [test]);
-
-    if (str && testIds.length > 0) {
-        // Logic: Run specific test logic (Enum) on a custom string
-        util.runTest({
-            str: str,
-            tests: testIds as TestNumber[]
+    if (tests) {
+        tests.forEach(num => {
+            ctx.msg = `Custom Test ${num}`;
+            inspect(this, util.inspectOptions);
+            util.execute(ctx as TestSchemasContext);
         });
-    } else if (testIds.length > 0) {
-        // Logic: Run pre-defined scenarios by their ID (1-6)
-        for (const id of testIds) {
-            const scenario = testScenarios[id];
-            if (scenario) {
-                util.runTest(scenario);
-            } else {
-                console.warn(`Scenario ID ${id} not found in testScenarios.`);
-            }
-        }
     }
 };
 
-// Run the main function to start the tests.
-async function main() {
+const parseInput = (value: string): ParseTestSchemaNumberOutput => {
+    const trimmedValue = value.trim();
+    if (trimmedValue === '') return undefined;
+    if (trimmedValue.includes(',')) {
+        return trimmedValue
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s !== '')
+            .map(Number);
+    }
+    const num = Number(trimmedValue);
+    return isNaN(num) ? undefined : [num];
+};
+
+const showAvailableTests = (): void => {
+    const availableTests = styleText(['cyan'], `Available test schemas: ${Object.keys(TestSchemas).join(', ')}`);
+    console.log(availableTests, '\n');
+};
+
+/**
+ * Prompts the user for input and returns the response as a Promise.
+ * @param promptText The text to display to the user.
+ * @returns A Promise that resolves with the user's input string.
+ */
+async function getInput(promptText: string): Promise<string> {
     const rl = readline.createInterface({ input, output });
-
     try {
-        // 1. Gather input for 'str' (any type)
-        const strInput = await rl.question("Enter value for 'str': ");
-
-        // 2. Gather and parse input for 'test' (number or number[])
-        const testInput = await rl.question("Enter 'test' (single number or comma-separated list): ");
-
-        let testValue: number | number[] | undefined;
-
-        // Parsing logic: Check if input contains commas for an array
-        if (testInput.includes(',')) {
-            testValue = testInput.split(',')
-                .map(val => val.trim())
-                .filter(val => val !== "") // Remove empty strings
-                .map(Number); // Convert strings to numbers
-        } else if (testInput.trim() !== "") {
-            testValue = Number(testInput); // Single number conversion
-        }
-
-        // 3. Construct the RunContext object
-        const context: RunContext = {
-            test: testValue,
-            str: strInput
-        };
-
-        // 4. Execute your function
-        runTest(context);
-
-    } catch (error) {
-        console.error("An error occurred:", error);
+        const answer = await rl.question(promptText);
+        return answer;
+    } catch (e) {
+        console.error('An error occurred:', e);
     } finally {
         rl.close();
     }
+    return '';
 }
 
+async function getStringInput(): Promise<string> {
+    const strQuestion = 'Enter a custom string to test (or press Enter to use predefined strings): ';
+    const strInputString = await getInput(strQuestion);
+    console.log('');
+    return strInputString.trim() !== '' ? strInputString : '';
+}
+
+async function getTestSchNumbers(): Promise<ParseTestSchemaNumberOutput> {
+    const TestSchNumberQuestion = 'Enter a test schema number or a comma-separated list (or press Enter to run all): ';
+    const TestSchNumberString = await getInput(TestSchNumberQuestion);
+    console.log('');
+    return parseInput(TestSchNumberString);
+}
+
+async function getLetterInput(): Promise<string> {
+    const ltrQuestion = styleText('yellow', 'One or more selected tests can use an "ltr" value. Enter character to find: ');
+    const ltrInput = await getInput(ltrQuestion);
+    console.log('');
+    return ltrInput.trim() !== '' ? ltrInput : '';
+}
+
+async function main() {
+    const testsThatRequireChar = [1, 2];
+    const testsThatRequireLtr = [3];
+    let strInput: string | undefined = undefined;
+    let TestSchNumberInput: number[] | undefined = undefined;
+    let ltrInput: string | undefined = undefined;
+
+    console.log('\n');
+
+    showAvailableTests();
+
+    // Get user input for string value
+    strInput = await getStringInput();
+    const isString = strInput.length > 1 ? true : false;
+
+    // Get user input for test numbers to execute
+    TestSchNumberInput = await getTestSchNumbers();
+    if (TestSchNumberInput === undefined && isString) TestSchNumberInput = [3, 4, 5];
+
+    // Check is ant of the selected tests can only accept a single character string
+    const requiresChar = TestSchNumberInput?.some(num => testsThatRequireChar.includes(num));
+
+    if (requiresChar && isString) {
+        console.log('Cannot execute the selected tests with a string, must be a single character.');
+        return;
+    }
+
+    // Check if any of the selected tests require a letter
+    const requiresLtr = TestSchNumberInput?.some(num => testsThatRequireLtr.includes(num));
+
+    // If needed get user input for letter to find
+    if (requiresLtr && isString) ltrInput = await getLetterInput();
+
+    const ctx: RunContext = {
+        str: strInput,
+        ltr: ltrInput,
+        tests: TestSchNumberInput,
+    };
+
+    run(ctx);
+}
+
+// Run the main function to start the tests.
 main();
 
 

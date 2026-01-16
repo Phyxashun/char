@@ -65,4 +65,4 @@ export enum CharType {
     // International / Multi-byte
     Emoji = 'Emoji',
     Unicode = 'Unicode',
-};
+}

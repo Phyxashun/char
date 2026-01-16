@@ -20,10 +20,11 @@ enum Test {
 }
 
 // Types
-
 interface RunContext {
-    test?: number | number[];
-    str?: any;
+    msg?: string;
+    str?: string;
+    ltr?: string;
+    tests?: number[];
 }
 
 /**
@@ -33,6 +34,7 @@ interface RunContext {
  * @property ltr An optional secondary character or string for tests that require it (e.g., searching).
  */
 interface TestContext {
+    msg: string;
     str: string;
     ltr?: string;
 }
@@ -42,23 +44,21 @@ interface TestContext {
  * It specifies the input strings and which test(s) to run.
  * @property str The primary string input for the test.
  * @property ltr An optional secondary character or string.
- * @property tests A single TestNumber or an array of TestNumbers to execute.
+ * @property tests A single TestDefNumber or an array of TestDefNumbers to execute.
  */
-interface TestDefContext {
+interface TestSchemasContext {
+    msg: string;
     str: string;
     ltr?: string;
-    tests: TestNumber | TestNumber[];
+    tests: number | number[];
 }
 
-/** 
- * A union type representing the valid numbers for a test case. 
+/**
+ * A function that executes a specific test scenario.
  */
-type TestNumber = 1 | 2 | 3 | 4 | 5;
+type TestDefinition = (ctx: TestContext) => void;
 
-/** 
- * A function that executes a specific test scenario. 
- */
-type TestFunction = (ctx: TestContext) => void;
+type ParseTestSchemaNumberOutput = number[] | undefined;
 
 //Utility Functions
 
@@ -108,27 +108,29 @@ const util = {
         console.log(output.replace(/\\u001b|\\x1b/gi, '\x1b'));
     },
     /** Executes a set of tests based on a test definition context. */
-    runTest: (testDefCtx: TestDefContext): void => {
-        const { str, ltr, tests } = testDefCtx;
-        // Normalize `tests` to always be an array for consistent processing.
-        const testsArray = Array.isArray(tests) ? tests : [tests];
-        const testCtx: TestContext = { str, ltr };
-
-        testsArray.forEach((testNum: TestNumber) => testFunctions[testNum](testCtx));
+    execute: (testSchCtx: TestSchemasContext): void => {
+        const { msg, str, ltr, tests }: TestSchemasContext = testSchCtx;
+        const testCtx: TestContext = { msg, str, ltr };
+        if (Array.isArray(tests)) {
+            tests.forEach(num => Tests[num]!(testCtx));
+        } else {
+            Tests[tests]!(testCtx);
+        }
     },
 };
 
 /**
- * A map of test implementations, where each key is a `TestNumber`
+ * A map of test implementations, where each key is a `TestDefNumber`
  * and the value is the corresponding test function.
  */
-const testFunctions: Record<TestNumber, TestFunction> = {
+const Tests: Record<number, TestDefinition> = {
     /**
      * Test 1: Creates a Char from a single character and outputs its raw,
      * character, and stored value representations.
      */
-    [Test.one]: ({ str }: TestContext): void => {
-        if (str.length === 0) return;
+    [Test.one]: ({ msg, str }: TestContext): void => {
+        if (str.length === 0 || str.length > 1) return;
+        console.log(`\n--- Running ${msg}-1 ---`);
         const char = new Char(str);
         util.insertTitle('CHARACTER TEST:');
         const raw = `${str}`;
@@ -138,15 +140,15 @@ const testFunctions: Record<TestNumber, TestFunction> = {
         const numAsStr = `${char.getValue()}`;
         console.log(`char:\tStored Value:\t${util.style(numAsStr)}`);
         util.insertReturn();
-
     },
 
     /**
      * Test 2: Creates a Char and displays its numeric value,
      * which is useful for non-digit characters.
      */
-    [Test.two]: ({ str }: TestContext): void => {
-        if (str.length === 0) return;
+    [Test.two]: ({ msg, str }: TestContext): void => {
+        if (str.length === 0 || str.length > 1) return;
+        console.log(`\n--- Running ${msg}-2 ---`);
         const char = new Char(str);
         util.insertTitle('NON-DIGIT CHARACTER TEST:');
         const raw = `${str}`;
@@ -164,9 +166,11 @@ const testFunctions: Record<TestNumber, TestFunction> = {
      * Test 3: Finds a specific character within a string and displays its
      * properties, such as value, case, and position.
      */
-    [Test.three]: ({ str, ltr }: TestContext): void => {
+    [Test.three]: ({ msg, str, ltr }: TestContext): void => {
         if (!ltr) return;
+        console.log(`\n--- Running ${msg}-3 ---`);
         const chars = Char.fromString(str);
+
         // Normalize both strings to a standard form (e.g., 'NFC' is common)
 
         // Ensure 'ltr' is a single grapheme cluster if intended
@@ -194,8 +198,9 @@ const testFunctions: Record<TestNumber, TestFunction> = {
      * Test 4: Iterates over a string to find and report the
      * position of whitespace and newline characters.
      */
-    [Test.four]: ({ str }: TestContext): void => {
+    [Test.four]: ({ msg, str }: TestContext): void => {
         const chars = Char.fromString(str);
+        console.log(`\n--- Running ${msg}-4 ---`);
         util.insertTitle('ITERATE TEST:');
 
         chars.forEach(ch => {
@@ -226,104 +231,151 @@ const testFunctions: Record<TestNumber, TestFunction> = {
      * Test 5: Demonstrates iterating over the `Char[]` array using a
      * for...of loop and inspecting each character.
      */
-    [Test.five]: ({ str }: TestContext): void => {
+    [Test.five]: ({ msg, str }: TestContext): void => {
+        console.log(`\n--- Running ${msg}-5 ---`);
         const chars = Char.fromString(str);
         util.insertTitle('FOR OF TEST:');
         for (const ch of chars) {
             console.log(util.inspect(ch));
         }
-        util.insertReturn();;
+        util.insertReturn();
     },
 };
 
 /**
- * A map of test definitions, where each key is a `TestNumber` and the value
- * is a `TestDefContext` object describing the test case.
+ * A map of test definitions, where each key is a `TestDefNumber` and the value
+ * is a `TestSchemasContext` object describing the test case.
  */
-const testScenarios: Record<number, TestDefContext> = {
-    [1]: { str: 'A', tests: 1 },
-    [2]: { str: '🪖', tests: [Test.one, Test.two] },
-    [3]: { str: `Hello, World!\nThis is line 2.`, ltr: 'W', tests: [3, 4, 5] },
-    [4]: { str: `🪖⚔️🎖️🪖🎖️💪`, ltr: '⚔️', tests: Test.five },
-    [5]: { str: '', ltr: '', tests: 1 },
-    [6]: { str: 'rgba(100, 250, 255, 0.5)', tests: 5 },
+const TestSchemas: Record<number, TestSchemasContext> = {
+    [1]: { msg: 'Test A', str: 'A', tests: [1, 2] },
+    [2]: { msg: 'Test B', str: '🪖', tests: [1, 2] },
+    [3]: { msg: 'Test C', str: `Hello, World!\nThis is line 2.`, ltr: 'W', tests: [3, 4, 5] },
+    [4]: { msg: 'Test D', str: `🪖⚔️🎖️🪖🎖️💪`, ltr: '⚔️', tests: [3, 4, 5] },
+    [5]: { msg: 'Test E', str: 'rgba(100, 250, 255, 0.5)', tests: [4, 5] },
 };
 
 /**
- * The main entry point for the script.
- * It iterates through all defined tests and executes them.
+ * The main test dispatcher.
+ * If called with no context, it runs all predefined tests.
+ * If called with user input, it finds the corresponding test definition and runs it.
  */
-const runTest = (ctx?: RunContext) => {
-    // Scenario 1: No context provided - Run all pre-defined scenarios
-    if (!ctx || (ctx.test === undefined && !ctx.str)) {
-        for (const testDefCtx of Object.values(testScenarios)) {
-            util.runTest(testDefCtx);
+const run = (ctx: RunContext) => {
+    const { str, ltr, tests } = ctx;
+    if (!str && !ltr && !tests) {
+        for (const testSchema of Object.values(TestSchemas)) {
+            util.execute(testSchema);
         }
         return;
     }
 
-    // Scenario 2: Context provided
-    const { test, str } = ctx;
-
-    // Normalize test IDs into an array
-    const testIds = test === undefined ? [] : (Array.isArray(test) ? test : [test]);
-
-    if (str && testIds.length > 0) {
-        // Logic: Run specific test logic (Enum) on a custom string
-        util.runTest({
-            str: str,
-            tests: testIds as TestNumber[]
+    if (tests) {
+        tests.forEach(num => {
+            ctx.msg = `Custom Test ${num}`;
+            inspect(this, util.inspectOptions);
+            util.execute(ctx as TestSchemasContext);
         });
-    } else if (testIds.length > 0) {
-        // Logic: Run pre-defined scenarios by their ID (1-6)
-        for (const id of testIds) {
-            const scenario = testScenarios[id];
-            if (scenario) {
-                util.runTest(scenario);
-            } else {
-                console.warn(`Scenario ID ${id} not found in testScenarios.`);
-            }
-        }
     }
 };
 
-// Run the main function to start the tests.
-async function main() {
+const parseInput = (value: string): ParseTestSchemaNumberOutput => {
+    const trimmedValue = value.trim();
+    if (trimmedValue === '') return undefined;
+    if (trimmedValue.includes(',')) {
+        return trimmedValue
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s !== '')
+            .map(Number);
+    }
+    const num = Number(trimmedValue);
+    return isNaN(num) ? undefined : [num];
+};
+
+const showAvailableTests = (): void => {
+    const availableTests = styleText(['cyan'], `Available test schemas: ${Object.keys(TestSchemas).join(', ')}`);
+    console.log(availableTests, '\n');
+};
+
+/**
+ * Prompts the user for input and returns the response as a Promise.
+ * @param promptText The text to display to the user.
+ * @returns A Promise that resolves with the user's input string.
+ */
+async function getInput(promptText: string): Promise<string> {
     const rl = readline.createInterface({ input, output });
-
     try {
-        // 1. Gather input for 'str' (any type)
-        const strInput = await rl.question("Enter value for 'str': ");
-
-        // 2. Gather and parse input for 'test' (number or number[])
-        const testInput = await rl.question("Enter 'test' (single number or comma-separated list): ");
-
-        let testValue: number | number[] | undefined;
-
-        // Parsing logic: Check if input contains commas for an array
-        if (testInput.includes(',')) {
-            testValue = testInput.split(',')
-                .map(val => val.trim())
-                .filter(val => val !== "") // Remove empty strings
-                .map(Number); // Convert strings to numbers
-        } else if (testInput.trim() !== "") {
-            testValue = Number(testInput); // Single number conversion
-        }
-
-        // 3. Construct the RunContext object
-        const context: RunContext = {
-            test: testValue,
-            str: strInput
-        };
-
-        // 4. Execute your function
-        runTest(context);
-
-    } catch (error) {
-        console.error("An error occurred:", error);
+        const answer = await rl.question(promptText);
+        return answer;
+    } catch (e) {
+        console.error('An error occurred:', e);
     } finally {
         rl.close();
     }
+    return '';
 }
 
+async function getStringInput(): Promise<string> {
+    const strQuestion = 'Enter a custom string to test (or press Enter to use predefined strings): ';
+    const strInputString = await getInput(strQuestion);
+    console.log('');
+    return strInputString.trim() !== '' ? strInputString : '';
+}
+
+async function getTestSchNumbers(): Promise<ParseTestSchemaNumberOutput> {
+    const TestSchNumberQuestion = 'Enter a test schema number or a comma-separated list (or press Enter to run all): ';
+    const TestSchNumberString = await getInput(TestSchNumberQuestion);
+    console.log('');
+    return parseInput(TestSchNumberString);
+}
+
+async function getLetterInput(): Promise<string> {
+    const ltrQuestion = styleText('yellow', 'One or more selected tests can use an "ltr" value. Enter character to find: ');
+    const ltrInput = await getInput(ltrQuestion);
+    console.log('');
+    return ltrInput.trim() !== '' ? ltrInput : '';
+}
+
+async function main() {
+    const testsThatRequireChar = [1, 2];
+    const testsThatRequireLtr = [3];
+    let strInput: string | undefined = undefined;
+    let TestSchNumberInput: number[] | undefined = undefined;
+    let ltrInput: string | undefined = undefined;
+
+    console.log('\n');
+
+    showAvailableTests();
+
+    // Get user input for string value
+    strInput = await getStringInput();
+    const isString = strInput.length > 1 ? true : false;
+
+    // Get user input for test numbers to execute
+    TestSchNumberInput = await getTestSchNumbers();
+    if (TestSchNumberInput === undefined && isString) TestSchNumberInput = [3, 4, 5];
+
+    // Check is ant of the selected tests can only accept a single character string
+    const requiresChar = TestSchNumberInput?.some(num => testsThatRequireChar.includes(num));
+
+    if (requiresChar && isString) {
+        console.log('Cannot execute the selected tests with a string, must be a single character.');
+        return;
+    }
+
+    // Check if any of the selected tests require a letter
+    const requiresLtr = TestSchNumberInput?.some(num => testsThatRequireLtr.includes(num));
+
+    // If needed get user input for letter to find
+    if (requiresLtr && isString) ltrInput = await getLetterInput();
+
+    const ctx: RunContext = {
+        str: strInput,
+        ltr: ltrInput,
+        tests: TestSchNumberInput,
+    };
+
+    run(ctx);
+}
+
+// Run the main function to start the tests.
 main();

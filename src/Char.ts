@@ -6,41 +6,41 @@ import { CharSpec } from './CharSpec.ts';
 
 /*
 interface InspectOptions {
-    // The length at which input values are split across multiple lines. Set to Infinity to format the input as a single line (in combination with compact set to true or any number >= 1).
-    breakLength?: number;
+	// The length at which input values are split across multiple lines. Set to Infinity to format the input as a single line (in combination with compact set to true or any number >= 1).
+	breakLength?: number;
 
-    // If true, the output is styled with ANSI color codes. Colors are customizable.
-    colors?: boolean;
+	// If true, the output is styled with ANSI color codes. Colors are customizable.
+	colors?: boolean;
 
-    // Setting this to false causes each object key to be displayed on a new line. It will also add new lines to text that is longer than breakLength. If set to a number, the most n inner elements are united on a single line as long as all properties fit into breakLength. Short array elements are also grouped together. Note that no text will be reduced below 16 characters, no matter the breakLength size. For more information, see the example below.
-    compact?: number | boolean;
+	// Setting this to false causes each object key to be displayed on a new line. It will also add new lines to text that is longer than breakLength. If set to a number, the most n inner elements are united on a single line as long as all properties fit into breakLength. Short array elements are also grouped together. Note that no text will be reduced below 16 characters, no matter the breakLength size. For more information, see the example below.
+	compact?: number | boolean;
 
-    // If false, [util.inspect.custom](depth, opts, inspect) functions are not invoked.
-    customInspect?: boolean;
+	// If false, [util.inspect.custom](depth, opts, inspect) functions are not invoked.
+	customInspect?: boolean;
     
-    // Specifies the number of times to recurse while formatting object. This is useful for inspecting large objects. To recurse up to the maximum call stack size pass Infinity or null.
-    depth?: null | number;
+	// Specifies the number of times to recurse while formatting object. This is useful for inspecting large objects. To recurse up to the maximum call stack size pass Infinity or null.
+	depth?: null | number;
     
-    // If set to true, getters are going to be inspected as well. If set to 'get' only getters without setter are going to be inspected. If set to 'set' only getters having a corresponding setter are going to be inspected. This might cause side effects depending on the getter function.
-    getters?: boolean | 'get' | 'set';
+	// If set to true, getters are going to be inspected as well. If set to 'get' only getters without setter are going to be inspected. If set to 'set' only getters having a corresponding setter are going to be inspected. This might cause side effects depending on the getter function.
+	getters?: boolean | 'get' | 'set';
     
-    // Specifies the maximum number of Array, TypedArray, WeakMap, and WeakSet elements to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no elements.
-    maxArrayLength?: null | number;
+	// Specifies the maximum number of Array, TypedArray, WeakMap, and WeakSet elements to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no elements.
+	maxArrayLength?: null | number;
     
-    // Specifies the maximum number of characters to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no characters.
-    maxStringLength?: null | number;
+	// Specifies the maximum number of characters to include when formatting. Set to null or Infinity to show all elements. Set to 0 or negative to show no characters.
+	maxStringLength?: null | number;
     
-    // If set to true, an underscore is used to separate every three digits in all bigints and numbers.
-    numericSeparator?: boolean;
+	// If set to true, an underscore is used to separate every three digits in all bigints and numbers.
+	numericSeparator?: boolean;
     
-    // If true, object's non-enumerable symbols and properties are included in the formatted result. WeakMap and WeakSet entries are also included as well as user defined prototype properties (excluding method properties).
-    showHidden?: boolean;
+	// If true, object's non-enumerable symbols and properties are included in the formatted result. WeakMap and WeakSet entries are also included as well as user defined prototype properties (excluding method properties).
+	showHidden?: boolean;
     
-    // If true, Proxy inspection includes the target and handler objects.
-    showProxy?: boolean;
+	// If true, Proxy inspection includes the target and handler objects.
+	showProxy?: boolean;
     
-    // If set to true or a function, all properties of an object, and Set and Map entries are sorted in the resulting string. If set to true the default sort is used. If set to a function, it is used as a compare function.
-    sorted?: boolean | ((a: string, b: string) => number);
+	// If set to true or a function, all properties of an object, and Set and Map entries are sorted in the resulting string. If set to true the default sort is used. If set to a function, it is used as a compare function.
+	sorted?: boolean | ((a: string, b: string) => number);
 }//*/
 
 /**
@@ -59,16 +59,36 @@ const COMMON_ESCAPES: Record<string, string> = {
     '\v': '\\v',
     '\f': '\\f',
     '\0': '\\0',
-    '\\': '\\\\'
+    '\\': '\\\\',
 } as const;
 const NUMERAL_MAP: Record<string, number> = {
-    'Ⅰ': 1, 'Ⅱ': 2, 'Ⅲ': 3, 'Ⅳ': 4, 'Ⅴ': 5,
-    'Ⅵ': 6, 'Ⅶ': 7, 'Ⅷ': 8, 'Ⅸ': 9, 'Ⅹ': 10,
-    'Ⅺ': 11, 'Ⅻ': 12, 'Ⅼ': 50, 'Ⅽ': 100, 'Ⅾ': 500,
-    'Ⅿ': 1000,
+    Ⅰ: 1,
+    Ⅱ: 2,
+    Ⅲ: 3,
+    Ⅳ: 4,
+    Ⅴ: 5,
+    Ⅵ: 6,
+    Ⅶ: 7,
+    Ⅷ: 8,
+    Ⅸ: 9,
+    Ⅹ: 10,
+    Ⅺ: 11,
+    Ⅻ: 12,
+    Ⅼ: 50,
+    Ⅽ: 100,
+    Ⅾ: 500,
+    Ⅿ: 1000,
     // Add other numeral systems here
-    '①': 1, '②': 2, '③': 3, '④': 4, '⑤': 5,
-    '⑥': 6, '⑦': 7, '⑧': 8, '⑨': 9, '⑩': 10,
+    '①': 1,
+    '②': 2,
+    '③': 3,
+    '④': 4,
+    '⑤': 5,
+    '⑥': 6,
+    '⑦': 7,
+    '⑧': 8,
+    '⑨': 9,
+    '⑩': 10,
 } as const;
 
 /**
@@ -83,7 +103,7 @@ export class Position {
         public index: number = IS_UNDEFINED,
         public line: number = IS_UNDEFINED,
         public column: number = IS_UNDEFINED,
-    ) { }
+    ) {}
 }
 
 export class IChar {
@@ -112,7 +132,7 @@ export class IChar {
     }
 
     public get value(): string {
-        // Convert code points to strings one-by-one to avoid 
+        // Convert code points to strings one-by-one to avoid
         // stack overflow limits caused by the spread operator (...)
         return Array.from(this._value)
             .map(codePoint => String.fromCodePoint(codePoint))
@@ -124,8 +144,8 @@ export class IChar {
         const codePoints = Array.from(character).map(c => c.codePointAt(0)!);
 
         // Validate that nothing stored is outside the valid Unicode range
-        if (codePoints.some(cp => cp > 0x10FFFF)) {
-            throw new Error("Invalid Unicode code point detected.");
+        if (codePoints.some(cp => cp > 0x10ffff)) {
+            throw new Error('Invalid Unicode code point detected.');
         }
 
         this._value = new Uint32Array(codePoints);
@@ -154,14 +174,14 @@ export class Char extends IChar {
         options: {
             isSubstring?: boolean;
             position?: Position;
-        } = {}
+        } = {},
     ) {
         // Unicode-safe validation using Intl.Segmenter
         const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
         const segments = Array.from(segmenter.segment(character));
 
         if (segments.length !== 1) {
-            throw new Error("Input must be a single visual character (grapheme).");
+            throw new Error('Input must be a single visual character (grapheme).');
         }
 
         const isSubstring = options.isSubstring ?? false;
@@ -245,7 +265,8 @@ export class Char extends IChar {
         const CHAR = stylize(charPadded, 'date');
 
         // Handle the position info if it exists.
-        let IDX = '', POS = '';
+        let IDX = '',
+            POS = '';
         if (this.isSubstring) {
             // Stylize the index, line and column numbers.
             const idxPadStart = `${this.position.index}`.padStart(2, ' ');
@@ -345,7 +366,7 @@ export class Char extends IChar {
         // Basic check for standard digits 0-9
         if (digits) return parseInt(digits, 10);
 
-        // For other Unicode numbers, you might return the code point 
+        // For other Unicode numbers, you might return the code point
         // or use a library to get the actual decimal value
         return IS_UNDEFINED;
     }
@@ -380,10 +401,12 @@ export class Char extends IChar {
         for (const { segment, index } of segments) {
             const position = Char.calculatePosition(str, index);
 
-            chars.push(new Char(segment, {
-                isSubstring: true,
-                position: position
-            }));
+            chars.push(
+                new Char(segment, {
+                    isSubstring: true,
+                    position: position,
+                }),
+            );
         }
 
         // 3. Final Step: Assign the computed maxWidth to every character object
@@ -457,43 +480,43 @@ export class Char extends IChar {
     }
 
     public static isMultiCharacter(str: string): boolean {
-        return str === '\\n' ||
-            str === '\\t' ||
-            str === '\\r' ||
-            str === '\\v' ||
-            str === '\\f';
+        return str === '\\n' || str === '\\t' || str === '\\r' || str === '\\v' || str === '\\f';
     }
 
     public static isZeroWidth(code: number): boolean {
-        return (code <= 0x1F) ||                    // C0 controls
-            (code >= 0x7F && code <= 0x9F) ||       // C1 controls
-            (code >= 0x300 && code <= 0x36F) ||     // Combining Diacritical Marks
-            (code >= 0x200B && code <= 0x200F) ||   // Zero-width spaces
-            (code >= 0xFE00 && code <= 0xFE0F) ||   // Variation Selectors block
-            (code >= 0xFEFF && code <= 0xFEFF);     // Zero-width no-break space
+        return (
+            code <= 0x1f || // C0 controls
+            (code >= 0x7f && code <= 0x9f) || // C1 controls
+            (code >= 0x300 && code <= 0x36f) || // Combining Diacritical Marks
+            (code >= 0x200b && code <= 0x200f) || // Zero-width spaces
+            (code >= 0xfe00 && code <= 0xfe0f) || // Variation Selectors block
+            (code >= 0xfeff && code <= 0xfeff)
+        ); // Zero-width no-break space
     }
 
     public static isDoubleWidth(code: number): boolean {
         // This list is a heuristic. The Emoji_Presentation check in calculateVisualWidth is more robust for emojis.
         // This is primarily for full-width forms and CJK characters.
-        return (code >= 0x1100 && code <= 0x115F) ||    // Hangul Jamo
-            (code >= 0x2329 && code <= 0x232A) ||       // Left/Right Angle Bracket
-            (code >= 0x3040 && code <= 0x309F) ||       // Hiragana
-            (code >= 0x30A0 && code <= 0x30FF) ||       // Katakana
-            (code >= 0x4E00 && code <= 0x9FFF) ||       // CJK Unified Ideographs
-            (code >= 0xAC00 && code <= 0xD7A3) ||       // Hangul Syllables
-            (code >= 0xF900 && code <= 0xFAFF) ||       // CJK Compatibility Ideographs
-            (code >= 0xFE10 && code <= 0xFE19) ||       // Vertical Forms
-            (code >= 0xFE30 && code <= 0xFE6F) ||       // CJK Compatibility Forms
-            (code >= 0xFF00 && code <= 0xFFEF) ||       // Halfwidth and Fullwidth Forms
-            (code >= 0x1F300);                          // Most modern Emoji and Symbols
+        return (
+            (code >= 0x1100 && code <= 0x115f) || // Hangul Jamo
+            (code >= 0x2329 && code <= 0x232a) || // Left/Right Angle Bracket
+            (code >= 0x3040 && code <= 0x309f) || // Hiragana
+            (code >= 0x30a0 && code <= 0x30ff) || // Katakana
+            (code >= 0x4e00 && code <= 0x9fff) || // CJK Unified Ideographs
+            (code >= 0xac00 && code <= 0xd7a3) || // Hangul Syllables
+            (code >= 0xf900 && code <= 0xfaff) || // CJK Compatibility Ideographs
+            (code >= 0xfe10 && code <= 0xfe19) || // Vertical Forms
+            (code >= 0xfe30 && code <= 0xfe6f) || // CJK Compatibility Forms
+            (code >= 0xff00 && code <= 0xffef) || // Halfwidth and Fullwidth Forms
+            code >= 0x1f300
+        ); // Most modern Emoji and Symbols
     }
 
     /**
      * @method getType
      * @description
-     * @param char 
-     * @returns 
+     * @param char
+     * @returns
      */
     public static getType = (char: string): CharType => {
         if (char === undefined) return CharType.Undefined;

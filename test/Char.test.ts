@@ -41,7 +41,7 @@ describe('Char Custom Inspector', () => {
     it('formats a substring character with position and index info', () => {
         const char = new Char('G', {
             isSubstring: true,
-            position: new Position(10, 2, 5)
+            position: new Position(10, 2, 5),
         });
         const result = (char as any)[inspect.custom](1, mockOptions, mockInspectFn);
 
