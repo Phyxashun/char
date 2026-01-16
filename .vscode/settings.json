@@ -14,16 +14,17 @@
     // ============================================================================
     // TERMINAL SETTINGS
     // ============================================================================
-    "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font'",
-    "terminal.integrated.fontSize": 13,
+    "terminal.integrated.fontFamily": "JetBrainsMono Nerd Font Mono",
+    "terminal.integrated.fontSize": 14,
     "terminal.integrated.lineHeight": 1.15,
 
     // ============================================================================
     // EDITOR - GENERAL
     // ============================================================================
-    "editor.fontFamily": "'JetBrainsMono Nerd Font'",
-    "editor.fontSize": 14,
-    "editor.lineHeight": 1.4,
+    "editor.fontFamily": "JetBrainsMono Nerd Font Mono",
+    "editor.fontSize": 16,
+    "editor.lineHeight": 22,
+
     "editor.fontLigatures": true,
     "editor.smoothScrolling": true,
     "editor.minimap.enabled": false,

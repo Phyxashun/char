@@ -788,7 +788,7 @@ type TestDefinition = (ctx: TestContext) => void;
 
 type ParseTestSchemaNumberOutput = number[] | undefined;
 
-//Utility Functions
+// Utility Functions
 
 /**
  * A collection of helper functions for logging and formatting output.
@@ -971,7 +971,7 @@ const Tests: Record<number, TestDefinition> = {
 };
 
 /**
- * A map of test definitions, where each key is a `TestDefNumber` and the value
+ * A map of test schemas, where each key is a number and the value
  * is a `TestSchemasContext` object describing the test case.
  */
 const TestSchemas: Record<number, TestSchemasContext> = {
