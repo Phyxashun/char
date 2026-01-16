@@ -5,8 +5,8 @@
     // WORKBENCH & UI
     // ============================================================================
     "workbench.colorTheme": "Theme Darker",
-    "workbench.iconTheme": "vs-seti",
-    "workbench.productIconTheme": "Default",
+    "workbench.iconTheme": "material-icon-theme",
+    "workbench.productIconTheme": "material-product-icons",
     "explorer.confirmDelete": false,
     "explorer.confirmDragAndDrop": false,
     "json.validate.enable": false,
@@ -56,15 +56,58 @@
     "files.autoSave": "afterDelay",
     "files.insertFinalNewline": true,
 
-    // ============================================================================
-    // EDITOR - SYNTAX HIGHLIGHTING & BRACKETS
-    // ============================================================================
+    /*==============================================================================
+    //!     EDITOR - SYNTAX HIGHLIGHTING & BRACKETS
+    ==============================================================================*/
     "editor.semanticHighlighting.enabled": true,
     "editor.semanticTokenColorCustomizations": {
         "enabled": true
     },
     "editor.bracketPairColorization.enabled": true,
     "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "workbench.colorCustomizations": {
+        "editorBracketHighlight.foreground1": "#FFD700", // Gold
+        "editorBracketHighlight.foreground2": "#DA70D6", // Orchid
+        "editorBracketHighlight.foreground3": "#1E90FF", // Dodger Blue
+        "editorBracketHighlight.foreground4": "#32CD32", // Lime Green
+        "editorBracketHighlight.foreground5": "#FF4500", // OrangeRed
+        "editorBracketHighlight.foreground6": "#C71585", // MediumVioletRed
+        "editorBracketHighlight.unexpectedBracket.foreground": "#FF0000", // Bright Red for errors
+        "editorBracketMatch.background": "#233843",
+        "editorBracketMatch.border": "#00FFFF"
+    },
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": ["comment.line"],
+                "settings": {
+                    "foreground": "#6A9955",
+                    "fontStyle": "italic"
+                }
+            },
+            {
+                "scope": ["comment.block"],
+                "settings": {
+                    "foreground": "#FF8C00",
+                    "fontStyle": "italic"
+                }
+            },
+            {
+                "scope": ["comment.block.documentation"],
+                "settings": {
+                    "foreground": "#d65d0e",
+                    "fontStyle": "italic"
+                }
+            },
+            {
+                "scope": ["punctuation.definition.comment"],
+                "settings": {
+                    "foreground": "#6A9955",
+                    "fontStyle": ""
+                }
+            }
+        ]
+    },
     "editor.guides.bracketPairs": "active",
     "editor.guides.highlightActiveBracketPair": true,
     "editor.guides.indentation": true,
