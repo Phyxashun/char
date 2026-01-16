@@ -67,6 +67,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
     "bun": "^1.3.5",
     "consolidate": "link:consolidate",
     "logger": "link:logger",
+    "prettier": "^3.8.0",
     "typedoc": "^0.28.16",
     "vitest": "^4.0.17"
   },
@@ -143,6 +144,51 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 
 //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ End of file: ./tsconfig.json ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+
+//████████████████████████████████████████████████████████████████████████████████████████████████████
+//████████████████████████████████████████████████████████████████████████████████████████████████████
+
+
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ Start of file: ./prettier.config.ts ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+
+
+
+import { type Config } from "prettier";
+
+const config: Config = {
+  arrowParens: "avoid",
+  bracketSameLine: false,
+  objectWrap: "preserve",
+  bracketSpacing: true,
+  semi: true,
+  experimentalOperatorPosition: "end",
+  experimentalTernaries: false,
+  singleQuote: true,
+  jsxSingleQuote: true,
+  quoteProps: "as-needed",
+  trailingComma: "all",
+  singleAttributePerLine: false,
+  htmlWhitespaceSensitivity: "css",
+  vueIndentScriptAndStyle: false,
+  proseWrap: "preserve",
+  endOfLine: "lf",
+  insertPragma: false,
+  printWidth: 140,
+  requirePragma: false,
+  tabWidth: 4,
+  useTabs: false,
+  embeddedLanguageFormatting: "auto",
+};
+
+export default config;
+
+
+
+
+
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ End of file: ./prettier.config.ts ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
 
 //████████████████████████████████████████████████████████████████████████████████████████████████████
